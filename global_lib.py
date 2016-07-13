@@ -1,5 +1,6 @@
 import os
 import time
+import datetime
 
 
 class GlobalLib():
@@ -31,3 +32,11 @@ class GlobalLib():
     def print_empty_lines(param):
         for i in range(0, param):
                 print("")
+
+    @staticmethod
+    def date_iso():
+        return datetime.date.today().isoformat()
+
+    @staticmethod
+    def date_time_iso():
+        return datetime.datetime.now().isoformat()

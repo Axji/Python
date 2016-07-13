@@ -1,10 +1,8 @@
 from urllib import request
-import time
 import configparser
-import datetime
+from global_lib import *
 
 config = configparser.ConfigParser()
-
 config.read('config.ini')
 
 opener = request.build_opener()
@@ -14,16 +12,22 @@ wetterStationen = ['SIO', 'BER', 'BAS', 'CHM', 'CHD', 'GSB',
                    'DAV', 'ENG', 'GVE', 'LUG', 'PAY', 'SIA',
                    'SAE', 'SMA']
 
-print((config['DEFAULT']['BaseUrl']))
+cfgBaseUrl = config['DEFAULT']['baseUrl']
+cfgstringToReplaceInUrl = config['DEFAULT']['stringToReplaceInUrl']
+cfgsleepTimeBetweenFiles = int(config['DEFAULT']['sleepTimeBetweenFiles'])
 
-DateTimeStart = datetime.datetime.now().isoformat().replace('.', '_').replace(':', '')
+print(cfgBaseUrl)
+
+DateStart = GlobalLib.date_iso()
+    #datetime.datetime.now().isoformat().replace('.', '_').replace(':', '')
 
 for wetterstation in wetterStationen:
-    response = opener.open((config['DEFAULT']['BaseUrl']).replace('XXX', wetterstation))
+    #actualUrl =
+    response = opener.open(cfgBaseUrl.replace(cfgstringToReplaceInUrl, wetterstation))
     # print(response.read())
-    f = open('daten\\'+wetterstation+'_'+DateTimeStart+'.txt', 'w')
+    f = open('daten\\'+DateStart+'_'+wetterstation+'.txt', 'w')
     f.write(response.read().decode("utf-8"))
-    time.sleep(int(config['DEFAULT']['sleep']))
+    time.sleep(cfgsleepTimeBetweenFiles)
 
 
 

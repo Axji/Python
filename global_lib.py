@@ -40,3 +40,5 @@ class GlobalLib():
     @staticmethod
     def date_time_iso():
         return datetime.datetime.now().isoformat()
+
+

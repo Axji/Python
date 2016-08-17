@@ -6,7 +6,14 @@ import os
 config = configparser.ConfigParser()
 config.read('config.ini')
 cfg_data_dir = config['DEFAULT']['dataDir']
+debugLevel = 4
 
+
+def debug_print(debug_text, debug_lvl):
+    if debugLevel < debug_lvl:
+        return
+    print("### - " + debug_text[:500])
+    
 
 def get_files_from_web():
     opener = request.build_opener()
@@ -41,29 +48,44 @@ def get_date_from_file(file):
     return datetime.datetime.strptime(datestring, '%Y-%m-%d').date()
 
 
-def parse_content(data):
-    pass
+def parse_content(filecontent):
+    # Markante Stellen im Textfile markieren
+    station_pos = str.find(filecontent, config['DEFAULT']['Station'])
+    debug_print("station_pos = "+str(station_pos), 5)
+    station_line_end = str.find(filecontent, "\n", station_pos)
+    debug_print("station_line_end = "+str(station_line_end), 5)
+    data_pos = str.find(filecontent, config['DEFAULT']['LineBeforData'])
+    debug_print("data_pos = " + str(data_pos), 5)
+    data_pos += int(config['DEFAULT']['LineBeforDataLen'])
+    debug_print("data_pos + LineBeforData = " + str(data_pos), 5)
+    station_line = filecontent[station_pos:station_line_end]
+
+    debug_print(station_line, 5)
+    station = station_line[str.find(station_line, "    "):].strip()
+    debug_print(station, 4)
+
+    debug_print(filecontent[data_pos:], 4)
+    return 0
 
 
 def parse_files():
     max_date = datetime.datetime.strptime('1980-05-14', '%Y-%m-%d').date()
     file_list = os.listdir(cfg_data_dir)
     for file in file_list:
-        filedate = get_date_from_file(file)
-        if filedate > max_date:
-            max_date = filedate
+        file_date = get_date_from_file(file)
+        if file_date > max_date:
+            max_date = file_date
 
     for file in file_list:
         if file.startswith(max_date.isoformat()):
             with open(cfg_data_dir + '\\' +file, 'r') as actfile:
-                data = actfile.read()
-                parse_content(data)
+                file_content = actfile.read()
+                parse_content(file_content)
 
     # place code here
     return 1
 
-
-#get_files_from_web()
+# get_files_from_web()
 parse_files()
 
 # print(page)

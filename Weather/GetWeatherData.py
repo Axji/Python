@@ -65,6 +65,13 @@ def parse_content(filecontent):
     debug_print(station, 4)
 
     debug_print(filecontent[data_pos:], 4)
+    for line in filecontent[data_pos:].split("\n"):
+            year = int(line[0:4])
+            month = int(line[9:11])
+            temp = float(line[25:30])
+            rain = float(line[44:49])
+        
+
     return 0
 
 

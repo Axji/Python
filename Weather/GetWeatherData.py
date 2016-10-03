@@ -3,6 +3,8 @@ import configparser
 from global_lib import *
 import os
 
+
+
 config = configparser.ConfigParser()
 config.read('config.ini')
 cfg_data_dir = config['DEFAULT']['dataDir']
@@ -66,11 +68,13 @@ def parse_content(filecontent):
 
     debug_print(filecontent[data_pos:], 4)
     for line in filecontent[data_pos:].split("\n"):
+        if len(line) > 20:
             year = int(line[0:4])
             month = int(line[9:11])
-            temp = float(line[25:30])
-            rain = float(line[44:49])
-        
+            if line[25:30] != '   NA':
+                temp = float(line[25:30])
+            if line[44:49] != '   NA':
+                rain = float(line[44:49])
 
     return 0
 
@@ -92,7 +96,7 @@ def parse_files():
     # place code here
     return 1
 
-# get_files_from_web()
+#get_files_from_web()
 parse_files()
 
 # print(page)

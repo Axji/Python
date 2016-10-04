@@ -2,6 +2,7 @@ from urllib import request
 import configparser
 from global_lib import *
 import os
+from SqlLiteWD import *
 
 
 
@@ -75,6 +76,7 @@ def parse_content(filecontent):
                 temp = float(line[25:30])
             if line[44:49] != '   NA':
                 rain = float(line[44:49])
+
 
     return 0
 

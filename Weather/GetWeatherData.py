@@ -2,7 +2,6 @@ from urllib import request
 import configparser
 from global_lib import *
 import os
-from SqlLiteWD import *
 
 
 
@@ -13,12 +12,14 @@ debugLevel = 4
 
 
 def debug_print(debug_text, debug_lvl):
+    """Druckt Meldungen mit Führendem Marker in die Console"""
     if debugLevel < debug_lvl:
         return
     print("### - " + debug_text[:500])
     
 
 def get_files_from_web():
+    """Für jede in wetter_stations, Gepflegte Station werden die Aktuellen Wetterdatenabgerufen"""
     opener = request.build_opener()
     opener.addheaders = [('User-agent', 'Mozilla/5.0')]
     wetter_stations = ['SIO', 'BER', 'BAS', 'CHM', 'CHD', 'GSB',
@@ -38,6 +39,7 @@ def get_files_from_web():
         f = open(cfg_data_dir + '\\' + date_start + '_' + wetter_station + '.txt', 'w')
         response_str = response.read().decode("utf-8")
         # Jegliche art von Leerzeilen entfernen (Anscheinend gibt es ein Problem mit \r\r\n daher zuerst Fehlerkorrektur
+        # Evtl in eingene Funktion auslagern falls noch mehr Korrekturen nötig sind.
         response_str = response_str.replace("\r\n", "\n")
         response_str = response_str.replace("\n\n", "\n")
         response_str = response_str.replace("\n\n", "\n")
@@ -47,11 +49,13 @@ def get_files_from_web():
 
 
 def get_date_from_file(file):
+    """Holt das Dautm aus dem Header der Datei"""
     datestring = file[:10]
     return datetime.datetime.strptime(datestring, '%Y-%m-%d').date()
 
 
 def parse_content(filecontent):
+    """Loopt über den Heder und die Zeilen des files und liest die passenden Daten aus"""
     # Markante Stellen im Textfile markieren
     station_pos = str.find(filecontent, config['DEFAULT']['Station'])
     debug_print("station_pos = "+str(station_pos), 5)
@@ -82,6 +86,7 @@ def parse_content(filecontent):
 
 
 def parse_files():
+    """Liest alle Files aus dem Datenverzeichnis und wählt die Files mit dem höchstem Datum aus"""
     max_date = datetime.datetime.strptime('1980-05-14', '%Y-%m-%d').date()
     file_list = os.listdir(cfg_data_dir)
     for file in file_list:

@@ -81,7 +81,7 @@ def parse_content(filecontent):
             if line[44:49] != '   NA':
                 rain = float(line[44:49])
 
-
+    #todo Axel Daten in die Datenbank schreiben
     return 0
 
 
@@ -100,7 +100,6 @@ def parse_files():
                 file_content = actfile.read()
                 parse_content(file_content)
 
-    # place code here
     return 1
 
 #get_files_from_web()

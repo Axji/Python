@@ -1,8 +1,8 @@
-from urllib import request
+import urllib.request
 import configparser
-from global_lib import *
+import time
+import datetime
 import os
-
 
 
 config = configparser.ConfigParser()
@@ -20,8 +20,6 @@ def debug_print(debug_text, debug_lvl):
 
 def get_files_from_web():
     """Für jede in wetter_stations, Gepflegte Station werden die Aktuellen Wetterdatenabgerufen"""
-    opener = request.build_opener()
-    opener.addheaders = [('User-agent', 'Mozilla/5.0')]
     wetter_stations = ['SIO', 'BER', 'BAS', 'CHM', 'CHD', 'GSB',
                        'DAV', 'ENG', 'GVE', 'LUG', 'PAY', 'SIA',
                        'SAE', 'SMA']
@@ -29,22 +27,29 @@ def get_files_from_web():
     cfg_string_to_replace_in_url = config['DEFAULT']['stringToReplaceInUrl']
     cfg_sleep_time_between_files = int(config['DEFAULT']['sleepTimeBetweenFiles'])
 
-    date_start = GlobalLib.date_iso()
-    # datetime.datetime.now().isoformat().replace('.', '_').replace(':', '')
+    date_start = datetime.date.today().isoformat()
     for wetter_station in wetter_stations:
         actual_url = cfg_base_url.replace(cfg_string_to_replace_in_url, wetter_station)
         print("Actual File =" + actual_url)
-        response = opener.open(actual_url)
+
+        req = urllib.request.Request(actual_url)
+        req.add_header('User-Agent', 'urllib-example/0.1 (Contact: . . .)')
+
+        response = urllib.request.urlopen(req)
+
+        html_content = response.read()
+
+        html_content = str(html_content)
+        html_content = html_content.replace("\\r\\n", "\n")
+        html_content = html_content.replace("\n\n", "\n")
+        html_content = html_content.replace("\n\n", "\n")
+
         # print(response.read())
         f = open(cfg_data_dir + '\\' + date_start + '_' + wetter_station + '.txt', 'w')
-        response_str = response.read().decode("utf-8")
-        # Jegliche art von Leerzeilen entfernen (Anscheinend gibt es ein Problem mit \r\r\n daher zuerst Fehlerkorrektur
-        # Evtl in eingene Funktion auslagern falls noch mehr Korrekturen nötig sind.
-        response_str = response_str.replace("\r\n", "\n")
-        response_str = response_str.replace("\n\n", "\n")
-        response_str = response_str.replace("\n\n", "\n")
-        # filtered = os.linesep.join([s for s in responseStr.splitlines(True) if s.strip("\r\n")])
-        f.write(response_str)
+
+
+
+        f.write(html_content)
         time.sleep(cfg_sleep_time_between_files)
 
 
@@ -81,7 +86,7 @@ def parse_content(filecontent):
             if line[44:49] != '   NA':
                 rain = float(line[44:49])
 
-    #todo Axel Daten in die Datenbank schreiben
+    # todo Axel Daten in die Datenbank schreiben
     return 0
 
 
@@ -102,7 +107,7 @@ def parse_files():
 
     return 1
 
-#get_files_from_web()
-parse_files()
+get_files_from_web()
+#parse_files()
 
 # print(page)

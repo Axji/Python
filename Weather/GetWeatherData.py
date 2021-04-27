@@ -4,11 +4,12 @@ import time
 import datetime
 import os
 
+import pyodbc as pyodbc
 
 config = configparser.ConfigParser()
 config.read('config.ini')
 cfg_data_dir = config['DEFAULT']['dataDir']
-debugLevel = 4
+debugLevel = 0
 
 
 def debug_print(debug_text, debug_lvl):
@@ -16,7 +17,7 @@ def debug_print(debug_text, debug_lvl):
     if debugLevel < debug_lvl:
         return
     print("### - " + debug_text[:500])
-    
+
 
 def get_files_from_web():
     """Für jede in wetter_stations, Gepflegte Station werden die Aktuellen Wetterdatenabgerufen"""
@@ -47,8 +48,6 @@ def get_files_from_web():
         # print(response.read())
         f = open(cfg_data_dir + '\\' + date_start + '_' + wetter_station + '.txt', 'w')
 
-
-
         f.write(html_content)
         time.sleep(cfg_sleep_time_between_files)
 
@@ -60,12 +59,12 @@ def get_date_from_file(file):
 
 
 def parse_content(filecontent):
-    """Loopt über den Heder und die Zeilen des files und liest die passenden Daten aus"""
+    """Loopt über den Header und die Zeilen des files und liest die passenden Daten aus schreibt diese danach in die lokale Datenbank"""
     # Markante Stellen im Textfile markieren
     station_pos = str.find(filecontent, config['DEFAULT']['Station'])
-    debug_print("station_pos = "+str(station_pos), 5)
+    debug_print("station_pos = " + str(station_pos), 5)
     station_line_end = str.find(filecontent, "\n", station_pos)
-    debug_print("station_line_end = "+str(station_line_end), 5)
+    debug_print("station_line_end = " + str(station_line_end), 5)
     data_pos = str.find(filecontent, config['DEFAULT']['LineBeforData'])
     debug_print("data_pos = " + str(data_pos), 5)
     data_pos += int(config['DEFAULT']['LineBeforDataLen'])
@@ -77,16 +76,37 @@ def parse_content(filecontent):
     debug_print(station, 4)
 
     debug_print(filecontent[data_pos:], 4)
+
+    conn_str = ("Driver={SQL Server Native Client 11.0};"
+                "Server=localhost\\SQLEXPRESS;"
+                "Database=weather;"
+                "UID=weather;"
+                "PWD=weather;")
+
+    conn = pyodbc.connect(conn_str)
+    conn.autocommit = True
+
+    cursor = conn.cursor()
+
+    baseSQL = """INSERT INTO [Landing_Weather] 
+        ([Station] ,[Jahr] ,[Monat] ,[Temp] ,[Rain] ,[loaddate]) 
+        VALUES (?,?,?,?,?,?);"""
+
+    #baseSQL = """  INSERT INTO [dbo].[Landing_Weather] ([Station] ,[Jahr] ,[Monat] ,[Temp] ,[Rain] ,[loaddate]) VALUES ('A',1980,5,14,0,'2021-04-27')"""
+
     for line in filecontent[data_pos:].split("\n"):
         if len(line) > 20:
             year = int(line[0:4])
             month = int(line[9:11])
+            temp = -999.9
+            rain = -999.9
             if line[25:30] != '   NA':
                 temp = float(line[25:30])
             if line[44:49] != '   NA':
                 rain = float(line[44:49])
 
-    # todo Axel Daten in die Datenbank schreiben
+            cursor.execute(baseSQL, (station, year, month, temp, rain, datetime.datetime.now()))
+
     return 0
 
 
@@ -101,13 +121,14 @@ def parse_files():
 
     for file in file_list:
         if file.startswith(max_date.isoformat()):
-            with open(cfg_data_dir + '\\' +file, 'r') as actfile:
+            with open(cfg_data_dir + '\\' + file, 'r') as actfile:
                 file_content = actfile.read()
                 parse_content(file_content)
 
     return 1
 
-get_files_from_web()
-#parse_files()
+
+# get_files_from_web()
+parse_files()
 
 # print(page)

@@ -9,7 +9,7 @@ import pyodbc as pyodbc
 config = configparser.ConfigParser()
 config.read('config.ini')
 cfg_data_dir = config['DEFAULT']['dataDir']
-debugLevel = 0
+debugLevel = 3
 
 
 def debug_print(debug_text, debug_lvl):
@@ -21,6 +21,8 @@ def debug_print(debug_text, debug_lvl):
 
 def get_files_from_web():
     """Für jede in wetter_stations, Gepflegte Station werden die Aktuellen Wetterdatenabgerufen"""
+    debug_print("get_files_from_web()",1)
+
     wetter_stations = ['SIO', 'BER', 'BAS', 'CHM', 'CHD', 'GSB',
                        'DAV', 'ENG', 'GVE', 'LUG', 'PAY', 'SIA',
                        'SAE', 'SMA']
@@ -54,8 +56,12 @@ def get_files_from_web():
 
 def get_date_from_file(file):
     """Holt das Dautm aus dem Header der Datei"""
+    debug_print("get_date_from_file("+file+")", 1)
+
     datestring = file[:10]
-    return datetime.datetime.strptime(datestring, '%Y-%m-%d').date()
+    extracteddate = datetime.datetime.strptime(datestring, '%Y-%m-%d').date()
+    debug_print("Extracted Date " + extracteddate.strftime('%Y-%m-%d'), 3)
+    return extracteddate
 
 
 def parse_content(filecontent):
@@ -65,10 +71,10 @@ def parse_content(filecontent):
     debug_print("station_pos = " + str(station_pos), 5)
     station_line_end = str.find(filecontent, "\n", station_pos)
     debug_print("station_line_end = " + str(station_line_end), 5)
-    data_pos = str.find(filecontent, config['DEFAULT']['LineBeforData'])
+    data_pos = str.find(filecontent, config['DEFAULT']['LineBeforeData'])
     debug_print("data_pos = " + str(data_pos), 5)
-    data_pos += int(config['DEFAULT']['LineBeforDataLen'])
-    debug_print("data_pos + LineBeforData = " + str(data_pos), 5)
+    data_pos += int(config['DEFAULT']['LineBeforeDataLen'])
+    debug_print("data_pos + LineBeforeData = " + str(data_pos), 5)
     station_line = filecontent[station_pos:station_line_end]
 
     debug_print(station_line, 5)

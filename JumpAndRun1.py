@@ -66,11 +66,13 @@ while True:
         if not is_jumping:
             is_jumping = True
             jump_velocity = jump_strength
+        # already Jumping double jump possible?
         else:
             if not double_jump and double_jump_ready:
                 double_jump = True
                 jump_velocity = jump_strength
     else:
+        # jump-key unpressed during jump => double Jump possible
         if is_jumping and not double_jump:
             double_jump_ready = True
 

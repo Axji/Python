@@ -42,6 +42,11 @@ fps = 30
 time_ = 0
 
 
+def getmalus(pos_x, pos_y):
+    if not fenster.get_at((player_1.left + 10, player_1.top + 10)) == constant.COLOR_STREET:
+        return constant.MALUSFACTOR
+    pass
+
 
 while True:
     for event in pygame.event.get():
@@ -84,7 +89,7 @@ while True:
 
     #alle player updaten wichtig die Strecke mnuss angezeigt werden das je nach Boden ein Malus berechnet wird.
     for car in playerlist:
-        car.setmalus()
+        car.setmalus(getmalus(car.pos_x, car.pos_y))
         car.update()
         fenster.blit(car.getimage(), car.getPosAsRect())
 

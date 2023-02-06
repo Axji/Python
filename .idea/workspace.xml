@@ -4,21 +4,10 @@
     <bookmark url="file://$PROJECT_DIR$" mnemonic="2" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e8641ec8-cf16-4f16-89b5-921d99527067" name="Default" comment="+ Jump and Run doublejump">
-      <change afterPath="$PROJECT_DIR$/CarRace/car.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CarRace/car_1.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CarRace/car_2.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CarRace/constant.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CarRace/explosion.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CarRace/images/light.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CarRace/images/light2.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CarRace/images/light2_1.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CarRace/images/light2_2.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CarRace/images/light3_3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CarRace/main_myrace_1,9.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CarRace/track_1.png" afterDir="false" />
+    <list default="true" id="e8641ec8-cf16-4f16-89b5-921d99527067" name="Default" comment="Car Racing game Overhaul 1">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/JumpAndRun1.py" beforeDir="false" afterPath="$PROJECT_DIR$/JumpAndRun1.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CarRace/car.py" beforeDir="false" afterPath="$PROJECT_DIR$/CarRace/car.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CarRace/main_myrace_1,9.py" beforeDir="false" afterPath="$PROJECT_DIR$/CarRace/main_myrace_1,9.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -493,7 +482,14 @@
       <option name="project" value="LOCAL" />
       <updated>1671371300140</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="Car Racing game Overhaul 1">
+      <created>1675722465124</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1675722465124</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -579,7 +575,8 @@
     <MESSAGE value="Reworked URLLIB FileSaver =&gt; works again after Years" />
     <MESSAGE value="DB insert for Local MSSQL DataBase" />
     <MESSAGE value="+ Jump and Run doublejump" />
-    <option name="LAST_COMMIT_MESSAGE" value="+ Jump and Run doublejump" />
+    <MESSAGE value="Car Racing game Overhaul 1" />
+    <option name="LAST_COMMIT_MESSAGE" value="Car Racing game Overhaul 1" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

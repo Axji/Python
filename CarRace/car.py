@@ -86,4 +86,8 @@ class Car:
     def getimage(self):
         return pygame.transform.rotate(self.carImage, self.view_angle * -1) #Rotate winkel ist umgekehrt zu dem wie er in Game benutzt wird.
 
+    def setmalus(self, malusfactor):
+        self.activemalusfactor = malusfactor
+        pass
+
 

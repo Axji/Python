@@ -10,9 +10,8 @@ class Car:
     view_angle = 0
     delta_view_angle = 0
     name = ""
-    activemalusfactor = 1
+    activeMalusFactor = 1
     carImage = pygame.image.load("car_2.png")
-
 
     def __init__(self, name, image):
         self.speed = 0
@@ -23,7 +22,7 @@ class Car:
         self.carImage = pygame.image.load(image)
         self.delta_speed = 0
         self.delta_view_angle = 0
-        self.activemalusfactor = 1
+        self.activeMalusFactor = 1
         pass
 
     def reset(self):
@@ -45,18 +44,11 @@ class Car:
         self.pos_y += round(math.sin(math.radians(self.view_angle)) * self.speed)
         pass
 
-
     def speedLimiter(self):
-
-
-
-        if self.speed > constant.MAXSPEED * self.activemalusfactor:
-            self.speed = constant.MAXSPEED * self.activemalusfactor
-        if self.speed < (constant.MAXSPEED_REVERSE * -1 * self.activemalusfactor):
-            self.speed = (constant.MAXSPEED_REVERSE * -1 * self.activemalusfactor)
-
-
-
+        if self.speed > (constant.MAXSPEED * float(self.activeMalusFactor)):
+            self.speed = (constant.MAXSPEED * float(self.activeMalusFactor))
+        if self.speed < (constant.MAXSPEED_REVERSE * -1 * self.activeMalusFactor):
+            self.speed = (constant.MAXSPEED_REVERSE * -1 * self.activeMalusFactor)
 
     def accelerate(self):
         self.delta_speed += constant.ACCELERATIONVALUE
@@ -87,7 +79,7 @@ class Car:
         return pygame.transform.rotate(self.carImage, self.view_angle * -1) #Rotate winkel ist umgekehrt zu dem wie er in Game benutzt wird.
 
     def setmalus(self, malusfactor):
-        self.activemalusfactor = malusfactor
+        self.activeMalusFactor = float(malusfactor)
         pass
 
 

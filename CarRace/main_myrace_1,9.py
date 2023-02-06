@@ -43,8 +43,9 @@ time_ = 0
 
 
 def getmalus(pos_x, pos_y):
-    if not fenster.get_at((player_1.left + 10, player_1.top + 10)) == constant.COLOR_STREET:
+    if not fenster.get_at((int(pos_x) + 10, int(pos_y) + 10)) == constant.COLOR_STREET:
         return constant.MALUSFACTOR
+    return 1
     pass
 
 

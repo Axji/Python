@@ -7,12 +7,7 @@
     <bookmark url="file://$PROJECT_DIR$" mnemonic="2" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e8641ec8-cf16-4f16-89b5-921d99527067" name="Default" comment="malusfactor init">
-      <change afterPath="$PROJECT_DIR$/Bingo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Python.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Python.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="e8641ec8-cf16-4f16-89b5-921d99527067" name="Default" comment="Bingo mit ChatGPT" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -538,7 +533,15 @@
       <option name="project" value="LOCAL" />
       <updated>1675722859226</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="Bingo mit ChatGPT">
+      <option name="closed" value="true" />
+      <created>1730139241485</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1730139241485</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -626,7 +629,8 @@
     <MESSAGE value="+ Jump and Run doublejump" />
     <MESSAGE value="Car Racing game Overhaul 1" />
     <MESSAGE value="malusfactor init" />
-    <option name="LAST_COMMIT_MESSAGE" value="malusfactor init" />
+    <MESSAGE value="Bingo mit ChatGPT" />
+    <option name="LAST_COMMIT_MESSAGE" value="Bingo mit ChatGPT" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

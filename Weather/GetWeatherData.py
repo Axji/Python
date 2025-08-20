@@ -89,29 +89,29 @@ def parse_content(filecontent):
                 "UID=weather;"
                 "PWD=weather;")
 
-    conn = pyodbc.connect(conn_str)
-    conn.autocommit = True
-
-    cursor = conn.cursor()
-
-    baseSQL = """INSERT INTO [Landing_Weather] 
-        ([Station] ,[Jahr] ,[Monat] ,[Temp] ,[Rain] ,[loaddate]) 
-        VALUES (?,?,?,?,?,?);"""
-
-    #baseSQL = """  INSERT INTO [dbo].[Landing_Weather] ([Station] ,[Jahr] ,[Monat] ,[Temp] ,[Rain] ,[loaddate]) VALUES ('A',1980,5,14,0,'2021-04-27')"""
-
-    for line in filecontent[data_pos:].split("\n"):
-        if len(line) > 20:
-            year = int(line[0:4])
-            month = int(line[9:11])
-            temp = -999.9
-            rain = -999.9
-            if line[25:30] != '   NA':
-                temp = float(line[25:30])
-            if line[44:49] != '   NA':
-                rain = float(line[44:49])
-
-            cursor.execute(baseSQL, (station, year, month, temp, rain, datetime.datetime.now()))
+    # conn = pyodbc.connect(conn_str)
+    # conn.autocommit = True
+    #
+    # cursor = conn.cursor()
+    #
+    # baseSQL = """INSERT INTO [Landing_Weather]
+    #     ([Station] ,[Jahr] ,[Monat] ,[Temp] ,[Rain] ,[loaddate])
+    #     VALUES (?,?,?,?,?,?);"""
+    #
+    # #baseSQL = """  INSERT INTO [dbo].[Landing_Weather] ([Station] ,[Jahr] ,[Monat] ,[Temp] ,[Rain] ,[loaddate]) VALUES ('A',1980,5,14,0,'2021-04-27')"""
+    #
+    # for line in filecontent[data_pos:].split("\n"):
+    #     if len(line) > 20:
+    #         year = int(line[0:4])
+    #         month = int(line[9:11])
+    #         temp = -999.9
+    #         rain = -999.9
+    #         if line[25:30] != '   NA':
+    #             temp = float(line[25:30])
+    #         if line[44:49] != '   NA':
+    #             rain = float(line[44:49])
+    #
+    #         cursor.execute(baseSQL, (station, year, month, temp, rain, datetime.datetime.now()))
 
     return 0
 

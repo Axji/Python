@@ -1,3 +1,9 @@
+"""Liest die aktuelle Auslastung der Fitnesspark-Standorte aus und hängt sie an eine CSV-Datei an.
+
+Pro Tag wird eine eigene Datei (Fitnespark_Belegung_JJJJ-MM-TT.csv) angelegt. Das Skript ist für den regelmässigen
+Aufruf gedacht, etwa per Aufgabenplanung. Die CSV-Dateien können danach mit fitnessparks/fitnesspark_csv_to_mariadb.py
+in die Datenbank geladen werden.
+"""
 import csv
 import datetime as dt
 import os
@@ -10,23 +16,21 @@ REQUEST_TIMEOUT = 15  # Sekunden
 
 class FitnessParkScraper:
     """
-    A class to scrape fitness park occupancy data from a list of URLs.
+    Liest die Auslastungsdaten der Fitnessparks von einer Liste von URLs und speichert sie in einer CSV-Datei.
 
-    Attributes:
-        parks (list): A list of dictionaries, where each dictionary represents a fitness park
-                      and contains its name, ID, and URL.
-        output_filename (str): The name of the CSV file where the data will be stored.
-        header (list): The header row for the CSV file.
+    Attribute:
+        parks (list): Liste von Dictionaries, je eines pro Fitnesspark mit Name, ID und URL.
+        output_filename (str): Name der CSV-Datei, in die die Daten geschrieben werden.
+        header (list): Kopfzeile der CSV-Datei.
     """
 
     def __init__(self, parks, output_filename=None):
         """
-        Constructs all the necessary attributes for the FitnessParkScraper object.
+        Erstellt den Scraper.
 
         Args:
-            parks (list): A list of dictionaries representing fitness parks.
-            output_filename (str, optional): The name of the output CSV file.
-                                             Defaults to a daily-named file.
+            parks (list): Liste von Dictionaries, die die Fitnessparks beschreiben.
+            output_filename (str, optional): Name der Ausgabedatei. Standard ist eine Datei mit dem heutigen Datum im Namen.
         """
         self.parks = parks
         if output_filename is None:
@@ -39,7 +43,7 @@ class FitnessParkScraper:
 
     def create_header_if_not_exists(self):
         """
-        Creates a header in the CSV file if the file is new or empty.
+        Schreibt die Kopfzeile in die CSV-Datei, wenn die Datei neu oder leer ist.
         """
         file_exists = os.path.exists(self.output_filename)
         file_is_empty = not file_exists or os.path.getsize(self.output_filename) == 0
@@ -53,16 +57,16 @@ class FitnessParkScraper:
 
     def fetch_and_store_url_data(self, park):
         """
-        Fetches data for a single park and stores it in the CSV file.
+        Ruft die Daten eines einzelnen Parks ab und hängt sie an die CSV-Datei an.
 
         Args:
-            park (dict): A dictionary containing the park's name and URL.
+            park (dict): Dictionary mit dem Namen und der URL des Parks.
         """
         current_datetime = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
-            # Fetch data from the URL
+            # Daten von der URL abrufen
             response = requests.get(park["URL"], timeout=REQUEST_TIMEOUT)
-            response.raise_for_status()  # Raise an exception for bad status codes
+            response.raise_for_status()  # Bei Fehlerstatus (z. B. 404 oder 500) eine Ausnahme auslösen
 
             data = response.json()
 
@@ -71,7 +75,7 @@ class FitnessParkScraper:
                     f"No data received from {park['URL']}. File '{self.output_filename}' was not updated."
                 )
             else:
-                # Append data to the CSV file
+                # Daten an die CSV-Datei anhängen
                 with open(
                     self.output_filename, "a", newline="", encoding="utf-8"
                 ) as csvfile:
@@ -94,7 +98,7 @@ class FitnessParkScraper:
 
     def run(self):
         """
-        Iterates through the list of parks and fetches data for each one.
+        Geht die Liste der Parks durch und ruft für jeden die Daten ab.
         """
         self.create_header_if_not_exists()
         for park in self.parks:
@@ -102,8 +106,8 @@ class FitnessParkScraper:
 
 
 if __name__ == "__main__":
-    # A list of fitness parks to scrape data from.
-    # Each park is a dictionary containing its name, ID, and a URL to fetch occupancy data.
+    # Liste der Fitnessparks, deren Auslastung abgerufen wird.
+    # Jeder Park ist ein Dictionary mit Name, ID und der URL, die die aktuelle Besucherzahl liefert.
     fitnessparks = [
         {
             "Name": "Ostermundigen",
@@ -192,6 +196,6 @@ if __name__ == "__main__":
         },
     ]
 
-    # Create a scraper instance and run it
+    # Scraper erstellen und ausführen
     scraper = FitnessParkScraper(fitnessparks)
     scraper.run()

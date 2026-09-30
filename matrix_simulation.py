@@ -1,10 +1,15 @@
+"""Simulation einer 10x10-Matrix: Jede Zelle zählt in einem eigenen Thread und eigenen Tempo von 0 bis 9 hoch.
+
+Das Fenster (tkinter) zeigt die Matrix, die Anzahl Aktualisierungen und die verstrichene Zeit. Start, Stop und Reset
+steuern die Simulation.
+"""
 import random
 import threading
 import time
 import tkinter as tk
 
-SIZE = 10
-REFRESH_MS = 100
+SIZE = 10          # Kantenlänge der Matrix
+REFRESH_MS = 100   # Abstand zwischen zwei Bildschirmaktualisierungen in Millisekunden
 
 # Zustand: Die Worker-Threads ändern nur diese Daten (unter Lock).
 # Alle Tk-Widgets werden ausschliesslich im Hauptthread über root.after aktualisiert,
@@ -12,8 +17,8 @@ REFRESH_MS = 100
 lock = threading.Lock()
 matrix = [[0 for _ in range(SIZE)] for _ in range(SIZE)]
 speed_matrix = [[0 for _ in range(SIZE)] for _ in range(SIZE)]  # Tempo je Zelle, einmal pro Start festgelegt
-update_counter = 0
-start_time = None
+update_counter = 0  # Anzahl aller Zellenänderungen seit dem Start
+start_time = None   # Startzeitpunkt für die Zeitanzeige
 stop_event = None  # None = nicht gestartet; sonst das Event der laufenden Simulation
 
 
@@ -28,6 +33,7 @@ def increment_cell(row, col, stop):
 
 
 def is_running():
+    """Gibt True zurück, wenn eine Simulation gestartet und noch nicht gestoppt wurde."""
     return stop_event is not None and not stop_event.is_set()
 
 
@@ -46,12 +52,14 @@ def display_matrix():
 
 
 def refresh():
+    """Aktualisiert die Anzeige und plant sich selbst erneut ein, solange die Simulation läuft."""
     display_matrix()
     if is_running():
         root.after(REFRESH_MS, refresh)
 
 
 def start_simulation():
+    """Startet die Simulation: würfelt pro Zelle ein Tempo und startet für jede Zelle einen Thread."""
     global stop_event, start_time
     if is_running():
         return
@@ -67,12 +75,14 @@ def start_simulation():
 
 
 def stop_simulation():
+    """Stoppt alle Threads (über das Stop-Signal) und zeigt den letzten Stand an."""
     if stop_event is not None:
         stop_event.set()
     display_matrix()
 
 
 def reset_simulation():
+    """Stoppt die Simulation und setzt Matrix, Zähler und Zeit auf 0 zurück."""
     global update_counter, start_time
     stop_simulation()
     with lock:
@@ -86,6 +96,7 @@ def reset_simulation():
 
 
 if __name__ == "__main__":
+    # Fenster mit Schaltflächen, Anzeigen und Textfeld für die Matrix aufbauen
     root = tk.Tk()
     root.title("Matrix Display")
     root.geometry("500x500")
@@ -107,6 +118,7 @@ if __name__ == "__main__":
     text_widget.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
 
     root.mainloop()
+    # Nach dem Schliessen des Fensters laufende Threads beenden
     if stop_event is not None:
         stop_event.set()
     print("Done!")

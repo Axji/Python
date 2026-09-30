@@ -1,14 +1,19 @@
+"""Bingo-Simulation: Ein 5x5-Feld wird erstellt und so lange mit gezogenen Zahlen markiert, bis ein Bingo entsteht."""
 import random
 
 
 class BingoFeld:
+    """Ein Bingo-Feld. Zahlen 1-75 verteilt auf 5 Spalten (1-15, 16-30, ...); Mitte ist ein freies Feld."""
+
     def __init__(self, groesse=5):
+        """Erstellt ein leeres Feld mit `groesse` mal `groesse` Feldern."""
         # Erstelle ein leeres Bingo-Feld mit der angegebenen Größe
         self.groesse = groesse
         self.feld = [[None for _ in range(groesse)] for _ in range(groesse)]
         self.feld[groesse // 2][groesse // 2] = 0  # Mitte als freies Feld markieren
 
     def generiere_feld(self):
+        """Füllt das Feld: Jede Spalte erhält zufällige, verschiedene Zahlen aus ihrem eigenen Zahlenbereich."""
         # Fülle das Bingo-Feld mit zufälligen Werten in jeder Spalte
         for spalte in range(self.groesse):
             # Erstellen eines Bereichs von möglichen Werten für jede Spalte
@@ -22,6 +27,7 @@ class BingoFeld:
                     self.feld[zeile][spalte] = werte[zeile]
 
     def zeige_feld(self):
+        """Gibt das Feld zeilenweise auf der Konsole aus."""
         # Zeige das Bingo-Feld in einer lesbaren Form
         for zeile in self.feld:
             print("\t".join(self._anzeige(feld) for feld in zeile))
@@ -36,6 +42,7 @@ class BingoFeld:
         return str(feld)
 
     def markiere_zahl(self, zahl):
+        """Markiert die Zahl (durch Vorzeichenwechsel), falls sie auf dem Feld steht. Gibt True zurück, wenn sie gefunden wurde."""
         # Markiere eine Zahl als 'X', wenn sie auf dem Feld gefunden wird
         for zeile in range(self.groesse):
             for spalte in range(self.groesse):
@@ -45,6 +52,7 @@ class BingoFeld:
         return False
 
     def ueberpruefe_bingo(self):
+        """Gibt True zurück, wenn eine Zeile, Spalte oder Diagonale vollständig markiert ist (markiert = 0 oder negativ)."""
         # Prüfen, ob eine vollständige Zeile, Spalte oder Diagonale markiert ist
         # Zeilen prüfen
         for zeile in self.feld:
@@ -64,6 +72,7 @@ class BingoFeld:
 
 
 def spiele():
+    """Spielt eine Runde: zieht Zahlen in zufälliger Reihenfolge, bis das Feld ein Bingo hat."""
     bingo = BingoFeld()
     bingo.generiere_feld()
     print("Bingo-Feld:")

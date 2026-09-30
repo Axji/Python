@@ -6,7 +6,7 @@ class Sorting():
     moves = 0
 
     @staticmethod
-    def reset_coutners():
+    def reset_counters():
         Sorting.tests = 0
         Sorting.moves = 0
 
@@ -46,7 +46,7 @@ class Sorting():
                         swapped = True  # We found two elements in the wrong order
                         GlobalLib.change_positions(list_of_elements, element, element+1)
                 if not swapped:
-                    return
+                    return list_of_elements
 
     @staticmethod
     def quick_sort(arr):

@@ -1,15 +1,18 @@
+import os
 import sqlite3
-conn = sqlite3.connect('..\daten\weather.db')
+
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'daten', 'weather.db')
+
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+conn = sqlite3.connect(DB_PATH)
 
 c = conn.cursor()
 
-# Create table
-
-c.execute('drop table weather')
-c.execute('''CREATE TABLE weather
+# Create table (bestehende Daten bleiben erhalten)
+c.execute('''CREATE TABLE IF NOT EXISTS weather
             (Station text,
-            year number,
-            month number,
+            year integer,
+            month integer,
             temperature real,
             rain real,
             createUser text,
@@ -17,3 +20,4 @@ c.execute('''CREATE TABLE weather
             updateUser text,
             updateTime datetime)''')
 conn.commit()
+conn.close()

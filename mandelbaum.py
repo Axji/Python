@@ -7,29 +7,30 @@ from tkinter import ttk
 WIDTH = 1920
 HEIGHT = 1080
 
-def mandelbrot(c, max_iter):
-    z = 0
+def escape_iterations(x_min, x_max, y_min, y_max, max_iter):
+    """Anzahl Iterationen bis zum Ausbruch je Pixel (max_iter = gehört zur Menge), vektorisiert mit numpy."""
+    real = np.linspace(x_min, x_max, WIDTH, endpoint=False)
+    imag = np.linspace(y_min, y_max, HEIGHT, endpoint=False)
+    c = real[np.newaxis, :] + 1j * imag[:, np.newaxis]  # Form (HEIGHT, WIDTH)
+
+    z = np.zeros_like(c)
+    counts = np.full(c.shape, max_iter, dtype=np.int64)
+    active = np.ones(c.shape, dtype=bool)  # Pixel, die noch nicht ausgebrochen sind
     for i in range(max_iter):
-        z = z*z + c
-        if abs(z) > 2:
-            return i
-    return max_iter
+        z[active] = z[active] ** 2 + c[active]
+        escaped = active & (np.abs(z) > 2)
+        counts[escaped] = i
+        active &= ~escaped
+        if not active.any():
+            break
+    return counts
+
 
 def generate_mandelbrot(x_min, x_max, y_min, y_max, max_iter):
-    img = Image.new('RGB', (WIDTH, HEIGHT), color='black')
-    pixels = img.load()
-
-    for x in range(WIDTH):
-        for y in range(HEIGHT):
-            real = x_min + (x / WIDTH) * (x_max - x_min)
-            imag = y_min + (y / HEIGHT) * (y_max - y_min)
-            c = complex(real, imag)
-            color = mandelbrot(c, max_iter)
-            if color == max_iter:
-                pixels[x, y] = (0, 0, 0)
-            else:
-                pixels[x, y] = (color % 256, (color * 2) % 256, (color * 4) % 256)
-    return img
+    counts = escape_iterations(x_min, x_max, y_min, y_max, max_iter)
+    rgb = np.stack([counts % 256, (counts * 2) % 256, (counts * 4) % 256], axis=-1).astype(np.uint8)
+    rgb[counts == max_iter] = (0, 0, 0)  # Punkte der Menge schwarz
+    return Image.fromarray(rgb, 'RGB')
 
 class MandelbrotApp:
     def __init__(self, root):
@@ -39,8 +40,9 @@ class MandelbrotApp:
         # Default parameters
         self.x_min = -2.0
         self.x_max = 1.0
-        self.y_min = -1.0
-        self.y_max = 1.0
+        # y-Bereich passend zum Seitenverhältnis 1920x1080, damit die Pixel quadratisch bleiben
+        self.y_min = -0.84375
+        self.y_max = 0.84375
         self.max_iter = 100
 
         # GUI elements

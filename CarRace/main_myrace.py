@@ -1,3 +1,8 @@
+"""Autorennen mit pygame.
+
+Steuerung: Pfeiltasten (Gas, Bremse, Lenken), Enter wechselt die Strecke, Escape beendet das Spiel.
+Neben der Strasse wird das Auto langsamer. Die Strecken liegen als track_1.png, track_2.png, ... neben dem Skript.
+"""
 # debugged: angle, explosion
 import os
 import sys
@@ -16,14 +21,17 @@ import car
 
 pygame.init()
 
+# Farben (RGB)
 bg = (255, 255, 255)
 red = (255, 0, 0)
 blue = (0, 0, 255)
 
+# Fenster erstellen
 fenster = pygame.display.set_mode((constant.WINDOWWITH, constant.WINDOWHIGH))
 pygame.display.set_caption("NeuroSim")
 fenster.fill(bg)
 
+# Das Auto des Spielers; weitere Autos könnten in `playerlist` ergänzt werden
 humanplayer = car.Car("Player", "car_2.png")
 playerlist = [humanplayer]
 
@@ -34,19 +42,22 @@ while os.path.exists(f"track_{track_id}.png"):
     tracks.append(pygame.image.load(f"track_{track_id}.png"))
     track_id += 1
 
-activeTrackNumber = 0
+activeTrackNumber = 0  # Index der aktuell gefahrenen Strecke
 
 player_1 = pygame.Rect(100, 165, 20, 20)
 image_1 = pygame.image.load("car_1.png")
 
 explosion = pygame.image.load("explosion.png")
 
+# Bildrate begrenzen
 clock = pygame.time.Clock()
 fps = 30
 time_ = 0
 
 
 def getmalus(pos_x, pos_y):
+    """Liefert den Tempo-Faktor für die Position: 1 auf der Strasse, sonst MALUSFACTOR (Abseits)."""
+    # Geprüft wird der Pixel in der Mitte des Autos (Position + halbe Autogrösse)
     x = int(pos_x) + 10
     y = int(pos_y) + 10
     # Ausserhalb des Fensters gilt als Abseits (get_at() würde sonst IndexError werfen)
@@ -57,8 +68,10 @@ def getmalus(pos_x, pos_y):
     return 1
 
 
+# Hauptschleife des Spiels
 running = True
 while running:
+    # Tastatur- und Fensterereignisse verarbeiten
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
@@ -67,6 +80,7 @@ while running:
             if event.key == K_ESCAPE:
                 running = False
 
+            # Enter: nächste Strecke laden (nach der letzten wieder die erste) und Autos zurücksetzen
             if event.key == K_RETURN:
                 activeTrackNumber += 1
                 if activeTrackNumber >= len(tracks):
@@ -75,6 +89,7 @@ while running:
                 for player in playerlist:
                     player.reset()
 
+            # Taste gedrückt: Gas, Bremse bzw. Lenkung einschalten
             if event.key == K_UP:
                 humanplayer.accelerate()
             if event.key == K_LEFT:
@@ -84,6 +99,7 @@ while running:
             if event.key == K_DOWN:
                 humanplayer.brake()
 
+        # Taste losgelassen: Wirkung wieder aufheben (Gegenbewegung)
         if event.type == KEYUP:
             if event.key == K_UP:
                 humanplayer.brake()

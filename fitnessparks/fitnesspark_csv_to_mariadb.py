@@ -1,3 +1,9 @@
+"""Importiert die CSV-Dateien der Fitnesspark-Auslastung in eine MariaDB-Tabelle.
+
+Ablauf: Alle *.csv aus dem Ordner `files_to_import` werden eingelesen und in die Tabelle `besucher` geschrieben.
+Benötigte Umgebungsvariable: FITNESS_DB_PASSWORD
+Optional: FITNESS_DB_HOST (Standard 127.0.0.1), FITNESS_DB_USER (Standard fitnesspar), FITNESS_DB_NAME (Standard fitnessparks).
+"""
 import glob
 import os
 import sys
@@ -10,8 +16,8 @@ import pymysql
 DB_HOST = os.environ.get('FITNESS_DB_HOST', '127.0.0.1')
 DB_USER = os.environ.get('FITNESS_DB_USER', 'fitnesspar')
 DB_NAME = os.environ.get('FITNESS_DB_NAME', 'fitnessparks')
-TABLE_NAME = 'besucher'
-CSV_DIRECTORY = 'files_to_import'
+TABLE_NAME = 'besucher'  # Zieltabelle
+CSV_DIRECTORY = 'files_to_import'  # Ordner mit den zu importierenden CSV-Dateien
 LOAD_USER = 'PythonScript'  # Benutzer, der den Ladevorgang durchführt
 
 
@@ -28,6 +34,7 @@ def load_csv_to_mariadb(csv_dir, table_name, db_conn, load_user):
 
     print(f"{len(files)} CSV-Dateien zum Verarbeiten gefunden.")
 
+    # Platzhalter (%s) statt Textzusammenbau, damit keine SQL-Injection möglich ist
     sql = (
         f"INSERT INTO `{table_name}` "
         "(`fitnesspark`, `belegung`, `Timestamp`, `loaduser`) "
@@ -40,11 +47,12 @@ def load_csv_to_mariadb(csv_dir, table_name, db_conn, load_user):
             print(f"Verarbeite Datei: {file}")
             try:
                 df = pd.read_csv(file)
-                # Sicherstellen, dass die Spaltennamen mit der Tabelle übereinstimmen
+                # Sicherstellen, dass die Datei die erwarteten drei Spalten hat, und sie passend zur Tabelle benennen
                 if len(df.columns) != 3:
                     raise ValueError(f"3 Spalten erwartet, gefunden: {len(df.columns)}")
                 df.columns = ['fitnesspark', 'belegung', 'Timestamp']
 
+                # Zeilen in Tupel umwandeln und Datentypen absichern (Text, Ganzzahl, Zeitstempel)
                 rows = [
                     (
                         str(row.fitnesspark),
@@ -55,7 +63,7 @@ def load_csv_to_mariadb(csv_dir, table_name, db_conn, load_user):
                     for row in df.itertuples(index=False)
                 ]
 
-                cursor.executemany(sql, rows)
+                cursor.executemany(sql, rows)  # Alle Zeilen der Datei in einem Schritt einfügen
                 db_conn.commit()
                 total_rows_inserted += len(rows)
                 print(f"   -> {len(rows)} Zeilen erfolgreich eingefügt.")
@@ -70,13 +78,14 @@ def main():
     """
     Hauptfunktion zur Steuerung des Skripts.
     """
+    # Das Passwort kommt nur aus der Umgebung und steht nie im Code
     password = os.environ.get('FITNESS_DB_PASSWORD')
     if not password:
         sys.exit("Umgebungsvariable FITNESS_DB_PASSWORD ist nicht gesetzt.")
 
     print("Starte den Ladevorgang...")
 
-    connection = None
+    connection = None  # Vorab setzen, damit `finally` auch nach einem Verbindungsfehler funktioniert
     try:
         connection = pymysql.connect(
             host=DB_HOST,

@@ -1,14 +1,16 @@
+"""Legt die SQLite-Datenbank und die Tabelle `weather` für die Wetterdaten an (gefahrlos mehrfach ausführbar)."""
 import os
 import sqlite3
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'daten', 'weather.db')
 
+# Datenordner anlegen, falls er noch fehlt
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 conn = sqlite3.connect(DB_PATH)
 
 c = conn.cursor()
 
-# Create table (bestehende Daten bleiben erhalten)
+# Tabelle anlegen (bestehende Daten bleiben erhalten)
 c.execute('''CREATE TABLE IF NOT EXISTS weather
             (Station text,
             year integer,

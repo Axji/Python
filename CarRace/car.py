@@ -11,7 +11,6 @@ class Car:
     delta_view_angle = 0
     name = ""
     activeMalusFactor = 1
-    carImage = pygame.image.load("car_2.png")
 
     def __init__(self, name, image):
         self.speed = 0

@@ -5,6 +5,8 @@ import time
 
 import requests
 
+REQUEST_TIMEOUT = 15  # Sekunden
+
 
 class FitnessParkScraper:
     """
@@ -56,12 +58,10 @@ class FitnessParkScraper:
         Args:
             park (dict): A dictionary containing the park's name and URL.
         """
-        self.create_header_if_not_exists()
-
         current_datetime = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
             # Fetch data from the URL
-            response = requests.get(park["URL"])
+            response = requests.get(park["URL"], timeout=REQUEST_TIMEOUT)
             response.raise_for_status()  # Raise an exception for bad status codes
 
             data = response.json()
@@ -81,10 +81,12 @@ class FitnessParkScraper:
                     f"Data from {park['URL']} successfully saved in '{self.output_filename}' at {current_datetime}"
                 )
 
+        except ValueError:
+            # requests.exceptions.JSONDecodeError erbt von ValueError und RequestException,
+            # daher muss dieser Zweig zuerst kommen.
+            print(f"Error: Data from {park['URL']} is not valid JSON.")
         except requests.exceptions.RequestException as e:
             print(f"Error fetching URL {park['URL']}: {e}")
-        except ValueError:
-            print(f"Error: Data from {park['URL']} is not valid JSON.")
         except IOError as e:
             print(f"Error writing to file '{self.output_filename}': {e}")
         except Exception as e:
@@ -94,6 +96,7 @@ class FitnessParkScraper:
         """
         Iterates through the list of parks and fetches data for each one.
         """
+        self.create_header_if_not_exists()
         for park in self.parks:
             self.fetch_and_store_url_data(park)
 
@@ -174,7 +177,7 @@ if __name__ == "__main__":
         },
         {
             "Name": "zuerich-sihlcity",
-            "ID": 784,
+            "ID": 704,
             "URL": "https://www.fitnesspark.ch/wp/wp-admin/admin-ajax.php?action=single_park_update_visitors&park_id=704&location_id=34&location_name=FP_Sihlcity",
         },
         {

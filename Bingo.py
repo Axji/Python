@@ -24,7 +24,16 @@ class BingoFeld:
     def zeige_feld(self):
         # Zeige das Bingo-Feld in einer lesbaren Form
         for zeile in self.feld:
-            print("\t".join(str(feld) if feld is not None else ' ' for feld in zeile))
+            print("\t".join(self._anzeige(feld) for feld in zeile))
+
+    @staticmethod
+    def _anzeige(feld):
+        # 0 = freies Feld in der Mitte, negative Zahl = markiert (gezogen)
+        if feld is None or feld == 0:
+            return ' '
+        if feld < 0:
+            return 'X'
+        return str(feld)
 
     def markiere_zahl(self, zahl):
         # Markiere eine Zahl als 'X', wenn sie auf dem Feld gefunden wird
@@ -54,22 +63,25 @@ class BingoFeld:
 
 
 
-bingo = BingoFeld()
-bingo.generiere_feld()
-print("Bingo-Feld:")
-bingo.zeige_feld()
-
-
-# Ziehen und Markieren von Zahlen bis ein Bingo erreicht wird
-gezogene_zahlen = list(range(1, 76))  # Alle möglichen Zahlen von 1 bis 75
-random.shuffle(gezogene_zahlen)  # Zufällige Reihenfolge der Zahlen
-
-zug_nummer = 0
-while not bingo.ueberpruefe_bingo():
-    zahl = gezogene_zahlen.pop(0)
-    zug_nummer += 1
-    print(f"\nZug {zug_nummer}: Ziehe {zahl}")
-    bingo.markiere_zahl(zahl)
+def spiele():
+    bingo = BingoFeld()
+    bingo.generiere_feld()
+    print("Bingo-Feld:")
     bingo.zeige_feld()
 
+    # Ziehen und Markieren von Zahlen bis ein Bingo erreicht wird
+    gezogene_zahlen = list(range(1, 76))  # Alle möglichen Zahlen von 1 bis 75
+    random.shuffle(gezogene_zahlen)  # Zufällige Reihenfolge der Zahlen
+
+    zug_nummer = 0
+    while not bingo.ueberpruefe_bingo():
+        zahl = gezogene_zahlen.pop(0)
+        zug_nummer += 1
+        print(f"\nZug {zug_nummer}: Ziehe {zahl}")
+        bingo.markiere_zahl(zahl)
+        bingo.zeige_feld()
+
+
+if __name__ == "__main__":
+    spiele()
 

@@ -1,38 +1,39 @@
-import sqlite3
 import datetime
+import os
+import sqlite3
+
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'daten', 'weather.db')
 
 
 class SqlLiteWD:
-    conn = sqlite3.connect('..\daten\weather.db')
-    isConnOpen = 0
+    """Schreibt Wetterdaten in die lokale SQLite-Datenbank (Tabelle wird von Init/PrepareDB.py angelegt)."""
 
-    @staticmethod
-    def insert_weather_data(station, year, month, temp, rain, create_user='system', create_date=datetime.datetime.now(),
-                            update_user='system', update_date=datetime.datetime.now()):
-        global conn
-        global isConnOpen
+    def __init__(self, db_path=DB_PATH):
+        self.db_path = db_path
+        self.conn = None
+
+    def con_open(self):
+        if self.conn is None:
+            self.conn = sqlite3.connect(self.db_path)
+        return self.conn
+
+    def con_close(self):
+        if self.conn is not None:
+            self.conn.close()
+            self.conn = None
+
+    def insert_weather_data(self, station, year, month, temp, rain, create_user='system', create_date=None,
+                            update_user='system', update_date=None):
         now = datetime.datetime.now()
-        if isConnOpen == 0:
-            con_open()
-            c = conn.cursor()
-            isConnOpen = 1
-        weather_line = [station, year, month, temp, rain, create_user, create_date, update_user, update_date]
-        c.execute("INSERT INTO weather VALUES (?,?,?,?,?,?,?,?,?)", weather_line)
+        weather_line = [station, year, month, temp, rain,
+                        create_user, create_date or now, update_user, update_date or now]
+        conn = self.con_open()
+        conn.execute("INSERT INTO weather VALUES (?,?,?,?,?,?,?,?,?)", weather_line)
         conn.commit()
 
-    @staticmethod
-    def con_close():
-        global isConnOpen
-        conn.close()
-        isConnOpen = 0
+    def __enter__(self):
+        self.con_open()
+        return self
 
-    @staticmethod
-    def con_open():
-        global conn
-        conn = sqlite3.connect('..\daten\weather.db')
-
-
-
-
-
-
+    def __exit__(self, exc_type, exc, tb):
+        self.con_close()

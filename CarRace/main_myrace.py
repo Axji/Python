@@ -1,8 +1,18 @@
 # debugged: angle, explosion
-import pygame, sys, math, time
+import os
+import sys
+
+# Bilder und Module werden relativ zu diesem Ordner geladen, egal von wo das Spiel gestartet wird.
+HERE = os.path.dirname(os.path.abspath(__file__))
+os.chdir(HERE)
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+
+import pygame
+from pygame.locals import *
+
 import constant
 import car
-from pygame.locals import *
 
 pygame.init()
 
@@ -15,20 +25,14 @@ pygame.display.set_caption("NeuroSim")
 fenster.fill(bg)
 
 humanplayer = car.Car("Player", "car_2.png")
-playerlist = []
+playerlist = [humanplayer]
 
-playerlist.append(humanplayer)
-
+# Alle vorhandenen Strecken track_1.png, track_2.png, ... laden
 tracks = []
-trackfilefound = 1
-
-trackID = 1
-while trackfilefound == 1:
-    try:
-        exec("tracks.append(pygame.image.load('track_" + str(trackID) + ".png'))")
-    except:
-        trackfilefound = 0
-    trackID += 1
+track_id = 1
+while os.path.exists(f"track_{track_id}.png"):
+    tracks.append(pygame.image.load(f"track_{track_id}.png"))
+    track_id += 1
 
 activeTrackNumber = 0
 
@@ -43,28 +47,33 @@ time_ = 0
 
 
 def getmalus(pos_x, pos_y):
-    if not fenster.get_at((int(pos_x) + 10, int(pos_y) + 10)) == constant.COLOR_STREET:
+    x = int(pos_x) + 10
+    y = int(pos_y) + 10
+    # Ausserhalb des Fensters gilt als Abseits (get_at() würde sonst IndexError werfen)
+    if not (0 <= x < fenster.get_width() and 0 <= y < fenster.get_height()):
+        return constant.MALUSFACTOR
+    if fenster.get_at((x, y)) != constant.COLOR_STREET:
         return constant.MALUSFACTOR
     return 1
-    pass
 
 
-while True:
+running = True
+while running:
     for event in pygame.event.get():
+        if event.type == QUIT:
+            running = False
 
         if event.type == KEYDOWN:
             if event.key == K_ESCAPE:
-                pygame.quit();
+                running = False
 
             if event.key == K_RETURN:
-
                 activeTrackNumber += 1
                 if activeTrackNumber >= len(tracks):
                     activeTrackNumber = 0
 
-                for car.Car in playerlist:
-                    car.reset()
-
+                for player in playerlist:
+                    player.reset()
 
             if event.key == K_UP:
                 humanplayer.accelerate()
@@ -85,19 +94,18 @@ while True:
             if event.key == K_DOWN:
                 humanplayer.accelerate()
 
-    #rennstrecke rendern
+    # Rennstrecke rendern
     fenster.blit(tracks[activeTrackNumber], (0, 0))
 
-    #alle player updaten wichtig die Strecke mnuss angezeigt werden das je nach Boden ein Malus berechnet wird.
-    for car in playerlist:
-        car.setmalus(getmalus(car.pos_x, car.pos_y))
-        car.update()
-        fenster.blit(car.getimage(), car.getPosAsRect())
+    # Alle Player updaten. Die Strecke muss angezeigt werden, damit je nach Boden ein Malus berechnet wird.
+    for player in playerlist:
+        player.setmalus(getmalus(player.pos_x, player.pos_y))
+        player.update()
+        fenster.blit(player.getimage(), player.getPosAsRect())
 
     pygame.display.update()
 
-    # time_ += 1
     clock.tick(fps)
 
 pygame.quit()
-#
+sys.exit()

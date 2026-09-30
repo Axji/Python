@@ -1,14 +1,15 @@
+import glob
 import os
+import sys
+
 import pandas as pd
 import pymysql
-from pymysql.converters import escape_string
-import glob
 
 # Konfigurationsvariablen
-DB_HOST = '127.0.0.1'
-DB_USER = 'fitnesspar'
-DB_PASSWORD = 'fitness+Qayxsw2'
-DB_NAME = 'fitnessparks'
+# Zugangsdaten kommen aus Umgebungsvariablen und werden nie eingecheckt.
+DB_HOST = os.environ.get('FITNESS_DB_HOST', '127.0.0.1')
+DB_USER = os.environ.get('FITNESS_DB_USER', 'fitnesspar')
+DB_NAME = os.environ.get('FITNESS_DB_NAME', 'fitnessparks')
 TABLE_NAME = 'besucher'
 CSV_DIRECTORY = 'files_to_import'
 LOAD_USER = 'PythonScript'  # Benutzer, der den Ladevorgang durchführt
@@ -17,6 +18,8 @@ LOAD_USER = 'PythonScript'  # Benutzer, der den Ladevorgang durchführt
 def load_csv_to_mariadb(csv_dir, table_name, db_conn, load_user):
     """
     Liest alle CSV-Dateien aus einem Verzeichnis und fügt sie in eine MariaDB-Tabelle ein.
+    Jede Datei wird in einer eigenen Transaktion geladen: Ein Fehler in einer Datei
+    macht nur diese Datei rückgängig, bereits geladene Dateien bleiben erhalten.
     """
     files = glob.glob(os.path.join(csv_dir, '*.csv'))
     if not files:
@@ -25,67 +28,72 @@ def load_csv_to_mariadb(csv_dir, table_name, db_conn, load_user):
 
     print(f"{len(files)} CSV-Dateien zum Verarbeiten gefunden.")
 
+    sql = (
+        f"INSERT INTO `{table_name}` "
+        "(`fitnesspark`, `belegung`, `Timestamp`, `loaduser`) "
+        "VALUES (%s, %s, %s, %s)"
+    )
+
     total_rows_inserted = 0
     with db_conn.cursor() as cursor:
         for file in files:
             print(f"Verarbeite Datei: {file}")
             try:
-                # Lesen der CSV-Datei in einen Pandas DataFrame
                 df = pd.read_csv(file)
                 # Sicherstellen, dass die Spaltennamen mit der Tabelle übereinstimmen
+                if len(df.columns) != 3:
+                    raise ValueError(f"3 Spalten erwartet, gefunden: {len(df.columns)}")
                 df.columns = ['fitnesspark', 'belegung', 'Timestamp']
 
-                # Daten in MariaDB einfügen
-                # Erstellen der SQL-INSERT-Anweisung
-                for index, row in df.iterrows():
-                    fitnesspark = escape_string(str(row['fitnesspark']))
-                    belegung = int(row['belegung'])
-                    timestamp = row['Timestamp']
+                rows = [
+                    (
+                        str(row.fitnesspark),
+                        int(row.belegung),
+                        pd.Timestamp(row.Timestamp).to_pydatetime(),
+                        load_user,
+                    )
+                    for row in df.itertuples(index=False)
+                ]
 
-                    sql = f"""
-                    INSERT INTO `{table_name}`
-                    (`fitnesspark`, `belegung`, `Timestamp`, `loaduser`)
-                    VALUES
-                    ('{fitnesspark}', {belegung}, '{timestamp}', '{load_user}')
-                    """
-                    cursor.execute(sql)
-                    total_rows_inserted += 1
-
-                print(f"   -> {len(df)} Zeilen erfolgreich eingefügt.")
+                cursor.executemany(sql, rows)
+                db_conn.commit()
+                total_rows_inserted += len(rows)
+                print(f"   -> {len(rows)} Zeilen erfolgreich eingefügt.")
             except Exception as e:
                 print(f"   Fehler beim Verarbeiten von Datei {file}: {e}")
-                db_conn.rollback()  # Rückgängig machen der Transaktion bei Fehler
+                db_conn.rollback()  # Nur diese Datei rückgängig machen
 
-    db_conn.commit()  # Speichern der Transaktion
-    print(f"\nDatenbank-Transaktion abgeschlossen. {total_rows_inserted} Zeilen insgesamt eingefügt.")
+    print(f"\nLadevorgang abgeschlossen. {total_rows_inserted} Zeilen insgesamt eingefügt.")
 
 
 def main():
     """
     Hauptfunktion zur Steuerung des Skripts.
     """
+    password = os.environ.get('FITNESS_DB_PASSWORD')
+    if not password:
+        sys.exit("Umgebungsvariable FITNESS_DB_PASSWORD ist nicht gesetzt.")
+
     print("Starte den Ladevorgang...")
 
+    connection = None
     try:
-        # Verbindung zur MariaDB-Datenbank herstellen
         connection = pymysql.connect(
             host=DB_HOST,
             user=DB_USER,
-            password=DB_PASSWORD,
+            password=password,
             database=DB_NAME,
             charset='utf8mb4',
             cursorclass=pymysql.cursors.DictCursor
         )
 
         print("Verbindung zur MariaDB erfolgreich hergestellt.")
-
-        # Funktion zum Laden der Daten aufrufen
         load_csv_to_mariadb(CSV_DIRECTORY, TABLE_NAME, connection, LOAD_USER)
 
     except pymysql.MySQLError as e:
         print(f"Fehler bei der Datenbankverbindung: {e}")
     finally:
-        if 'connection' in locals() and connection.open:
+        if connection is not None and connection.open:
             connection.close()
             print("Verbindung zur MariaDB geschlossen.")
 

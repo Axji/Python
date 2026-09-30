@@ -1,15 +1,18 @@
-import urllib.request
 import configparser
-import time
 import datetime
 import os
+import re
+import time
+import urllib.request
 
-import pyodbc as pyodbc
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 config = configparser.ConfigParser()
-config.read('config.ini')
-cfg_data_dir = config['DEFAULT']['dataDir']
+config.read(os.path.join(BASE_DIR, 'config.ini'), encoding='utf-8')
+cfg_data_dir = os.path.join(BASE_DIR, config['DEFAULT']['dataDir'])
 debugLevel = 3
+REQUEST_TIMEOUT = 30  # Sekunden
+DATA_FILE_PATTERN = re.compile(r'^\d{4}-\d{2}-\d{2}_.+\.txt$')
 
 
 def debug_print(debug_text, debug_lvl):
@@ -38,19 +41,17 @@ def get_files_from_web():
         req = urllib.request.Request(actual_url)
         req.add_header('User-Agent', 'urllib-example/0.1 (Contact: . . .)')
 
-        response = urllib.request.urlopen(req)
+        with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as response:
+            html_content = response.read().decode('utf-8', errors='replace')
 
-        html_content = response.read()
-
-        html_content = str(html_content)
-        html_content = html_content.replace("\\r\\n", "\n")
+        html_content = html_content.replace("\r\n", "\n")
         html_content = html_content.replace("\n\n", "\n")
         html_content = html_content.replace("\n\n", "\n")
 
-        # print(response.read())
-        f = open(cfg_data_dir + '\\' + date_start + '_' + wetter_station + '.txt', 'w')
-
-        f.write(html_content)
+        os.makedirs(cfg_data_dir, exist_ok=True)
+        target = os.path.join(cfg_data_dir, date_start + '_' + wetter_station + '.txt')
+        with open(target, 'w', encoding='utf-8') as f:
+            f.write(html_content)
         time.sleep(cfg_sleep_time_between_files)
 
 
@@ -83,12 +84,8 @@ def parse_content(filecontent):
 
     debug_print(filecontent[data_pos:], 4)
 
-    conn_str = ("Driver={SQL Server Native Client 11.0};"
-                "Server=localhost\\SQLEXPRESS;"
-                "Database=weather;"
-                "UID=weather;"
-                "PWD=weather;")
-
+    # Noch nicht umgesetzt: Schreiben in die Datenbank (Zugangsdaten aus Umgebungsvariablen lesen,
+    # Treiber "ODBC Driver 18 for SQL Server" verwenden; pyodbc dann in requirements.txt aufnehmen).
     # conn = pyodbc.connect(conn_str)
     # conn.autocommit = True
     #
@@ -119,7 +116,7 @@ def parse_content(filecontent):
 def parse_files():
     """Liest alle Files aus dem Datenverzeichnis und wählt die Files mit dem höchstem Datum aus"""
     max_date = datetime.datetime.strptime('1980-05-14', '%Y-%m-%d').date()
-    file_list = os.listdir(cfg_data_dir)
+    file_list = [f for f in os.listdir(cfg_data_dir) if DATA_FILE_PATTERN.match(f)]
     for file in file_list:
         file_date = get_date_from_file(file)
         if file_date > max_date:
@@ -127,14 +124,13 @@ def parse_files():
 
     for file in file_list:
         if file.startswith(max_date.isoformat()):
-            with open(cfg_data_dir + '\\' + file, 'r') as actfile:
+            with open(os.path.join(cfg_data_dir, file), 'r', encoding='utf-8', errors='replace') as actfile:
                 file_content = actfile.read()
                 parse_content(file_content)
 
     return 1
 
 
-# get_files_from_web()
-parse_files()
-
-# print(page)
+if __name__ == "__main__":
+    # get_files_from_web()
+    parse_files()

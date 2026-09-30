@@ -7,7 +7,7 @@ pygame.init()
 # Set the window size
 window_size = (800, 600)
 
-floorhight = 400
+floor_height = 400
 
 
 # Create the window
@@ -25,7 +25,9 @@ player_rect = player_image.get_rect()
 
 # Set the starting position of the player
 player_rect.x = 100
-player_rect.y = floorhight
+player_rect.y = floor_height
+# Exakte (Float-)Position in y: Rect speichert nur ganze Zahlen, das würde beim Springen abdriften
+player_y = float(floor_height)
 
 # Set the player's starting speed
 player_speed = 5
@@ -35,7 +37,6 @@ gravity = 0.5
 
 # Set up the jump strength
 jump_strength = 10
-jump_length = 0
 # Set up the player's jumping status
 is_jumping = False
 double_jump = False
@@ -76,18 +77,20 @@ while True:
         if is_jumping and not double_jump:
             double_jump_ready = True
 
+    # Spieler im sichtbaren Bereich halten
+    player_rect.x = max(0, min(window_size[0] - player_rect.width, player_rect.x))
+
     # Update the player's position based on gravity
     if is_jumping:
-        jump_length += 1
-        player_rect.y -= jump_velocity
+        player_y -= jump_velocity
         jump_velocity -= gravity
-        if player_rect.y >= floorhight:
+        if player_y >= floor_height:
             # The player has landed
-            jump_length = 0
             is_jumping = False
             double_jump = False
             double_jump_ready = False
-            player_rect.y = floorhight
+            player_y = float(floor_height)
+        player_rect.y = round(player_y)
 
     # Draw the player
     screen.fill((0, 0, 0))

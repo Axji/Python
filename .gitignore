@@ -56,3 +56,6 @@ venv/
 
 # Lokale Datenbanken
 *.db
+
+# Fitnesspark-Daten (CSV-Sicherungen und Datenbank) bleiben nur lokal
+data/

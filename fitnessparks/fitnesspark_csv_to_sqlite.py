@@ -1,44 +1,27 @@
-"""Importiert die CSV-Dateien der Fitnesspark-Auslastung in eine lokale SQLite-Datenbank.
+"""Importiert CSV-Dateien der Fitnesspark-Auslastung in die SQLite-Datenbank.
 
-Ablauf: Alle *.csv aus dem Ordner `files_to_import` werden eingelesen und in die Tabelle `besucher` geschrieben.
-Die Datenbank ist eine einzelne Datei (Standard: fitnessparks.db neben diesem Skript). Es wird weder ein
-Datenbankserver noch ein Passwort benötigt. Optional kann mit der Umgebungsvariable FITNESS_DB_PATH ein anderer
-Pfad vorgegeben werden.
+Ablauf: Alle *.csv aus dem Ordner `data` werden eingelesen und in die Tabelle `besucher` geschrieben. Das ist
+nützlich, um ältere CSV-Dateien nachträglich zu laden. Die Datenbank (data/fitnessparks.db) wird mit Ordner und
+Tabelle automatisch angelegt, es wird kein Datenbankserver und kein Passwort benötigt. Bereits vorhandene Zeilen
+werden übersprungen, der Import kann also gefahrlos wiederholt werden.
 """
 import glob
 import os
 import sqlite3
+import sys
 
 import pandas as pd
 
-# Konfigurationsvariablen
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.environ.get('FITNESS_DB_PATH', os.path.join(BASE_DIR, 'fitnessparks.db'))
-TABLE_NAME = 'besucher'  # Zieltabelle
-CSV_DIRECTORY = os.path.join(BASE_DIR, 'files_to_import')  # Ordner mit den zu importierenden CSV-Dateien
+# Das gemeinsame Datenbankmodul liegt eine Ebene höher
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import fitnesspark_db  # noqa: E402
+
 LOAD_USER = 'PythonScript'  # Benutzer, der den Ladevorgang durchführt
 
 
-def create_table_if_not_exists(db_conn, table_name):
+def load_csv_to_sqlite(csv_dir, db_conn, load_user):
     """
-    Legt die Zieltabelle an, falls sie noch nicht existiert.
-    Die Kombination aus Fitnesspark und Zeitstempel ist eindeutig, so entstehen beim erneuten
-    Import derselben Datei keine doppelten Zeilen.
-    """
-    with db_conn:
-        db_conn.execute(
-            f'CREATE TABLE IF NOT EXISTS "{table_name}" ('
-            "fitnesspark TEXT NOT NULL, "
-            "belegung INTEGER NOT NULL, "
-            "Timestamp TEXT NOT NULL, "
-            "loaduser TEXT, "
-            "UNIQUE (fitnesspark, Timestamp))"
-        )
-
-
-def load_csv_to_sqlite(csv_dir, table_name, db_conn, load_user):
-    """
-    Liest alle CSV-Dateien aus einem Verzeichnis und fügt sie in eine SQLite-Tabelle ein.
+    Liest alle CSV-Dateien aus einem Verzeichnis und fügt sie in die SQLite-Tabelle ein.
     Jede Datei wird in einer eigenen Transaktion geladen: Ein Fehler in einer Datei
     macht nur diese Datei rückgängig, bereits geladene Dateien bleiben erhalten.
     """
@@ -48,14 +31,6 @@ def load_csv_to_sqlite(csv_dir, table_name, db_conn, load_user):
         return
 
     print(f"{len(files)} CSV-Dateien zum Verarbeiten gefunden.")
-
-    # Platzhalter (?) statt Textzusammenbau, damit keine SQL-Injection möglich ist.
-    # OR IGNORE überspringt Zeilen, die schon in der Tabelle stehen (siehe UNIQUE-Bedingung).
-    sql = (
-        f'INSERT OR IGNORE INTO "{table_name}" '
-        "(fitnesspark, belegung, Timestamp, loaduser) "
-        "VALUES (?, ?, ?, ?)"
-    )
 
     total_rows_inserted = 0
     for file in files:
@@ -78,11 +53,7 @@ def load_csv_to_sqlite(csv_dir, table_name, db_conn, load_user):
                 for row in df.itertuples(index=False)
             ]
 
-            # `with db_conn` bestätigt die Transaktion bei Erfolg und macht sie bei einem Fehler rückgängig
-            with db_conn:
-                before = db_conn.total_changes
-                db_conn.executemany(sql, rows)  # Alle Zeilen der Datei in einem Schritt einfügen
-                inserted = db_conn.total_changes - before
+            inserted = fitnesspark_db.insert_rows(db_conn, rows)
             total_rows_inserted += inserted
             print(f"   -> {inserted} Zeilen erfolgreich eingefügt ({len(rows) - inserted} bereits vorhanden).")
         except Exception as e:
@@ -99,11 +70,10 @@ def main():
 
     connection = None  # Vorab setzen, damit `finally` auch nach einem Verbindungsfehler funktioniert
     try:
-        # Die Datenbankdatei wird beim ersten Zugriff automatisch angelegt
-        connection = sqlite3.connect(DB_PATH)
-        print(f"Verbindung zur SQLite-Datenbank '{DB_PATH}' erfolgreich hergestellt.")
-        create_table_if_not_exists(connection, TABLE_NAME)
-        load_csv_to_sqlite(CSV_DIRECTORY, TABLE_NAME, connection, LOAD_USER)
+        # Legt Datenordner, Datenbankdatei und Tabelle bei Bedarf an
+        connection = fitnesspark_db.open_database()
+        print(f"Verbindung zur SQLite-Datenbank '{fitnesspark_db.DB_PATH}' erfolgreich hergestellt.")
+        load_csv_to_sqlite(fitnesspark_db.DATA_DIR, connection, LOAD_USER)
 
     except sqlite3.Error as e:
         print(f"Fehler bei der Datenbankverbindung: {e}")

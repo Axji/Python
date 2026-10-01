@@ -1,17 +1,24 @@
-"""Liest die aktuelle Auslastung der Fitnesspark-Standorte aus und hängt sie an eine CSV-Datei an.
+"""Liest die aktuelle Auslastung der Fitnesspark-Standorte aus und speichert sie doppelt:
 
-Pro Tag wird eine eigene Datei (Fitnespark_Belegung_JJJJ-MM-TT.csv) angelegt. Das Skript ist für den regelmässigen
-Aufruf gedacht, etwa per Aufgabenplanung. Die CSV-Dateien können danach mit fitnessparks/fitnesspark_csv_to_mariadb.py
-in die Datenbank geladen werden.
+1. als Sicherung in einer CSV-Datei (pro Tag eine Datei: Fitnespark_Belegung_JJJJ-MM-TT.csv) und
+2. in der SQLite-Datenbank (Tabelle `besucher`).
+
+Beides liegt im Ordner `data` neben diesem Skript. Der Ordner, die Datenbank und die Tabelle werden bei Bedarf
+automatisch angelegt. Das Skript ist für den regelmässigen Aufruf gedacht, etwa per Aufgabenplanung.
+Ältere CSV-Dateien lassen sich mit fitnessparks/fitnesspark_csv_to_sqlite.py nachträglich in die Datenbank laden.
 """
 import csv
 import datetime as dt
 import os
+import sqlite3
 import time
 
 import requests
 
+import fitnesspark_db
+
 REQUEST_TIMEOUT = 15  # Sekunden
+LOAD_USER = 'FitnessParkScraper'  # Wird in der Datenbank als Herkunft der Zeile gespeichert
 
 
 class FitnessParkScraper:
@@ -20,7 +27,8 @@ class FitnessParkScraper:
 
     Attribute:
         parks (list): Liste von Dictionaries, je eines pro Fitnesspark mit Name, ID und URL.
-        output_filename (str): Name der CSV-Datei, in die die Daten geschrieben werden.
+        output_filename (str): Pfad der CSV-Datei (Sicherung), in die die Daten geschrieben werden.
+        db_conn (sqlite3.Connection): Datenbankverbindung; None, solange `run()` nicht läuft.
         header (list): Kopfzeile der CSV-Datei.
     """
 
@@ -30,21 +38,25 @@ class FitnessParkScraper:
 
         Args:
             parks (list): Liste von Dictionaries, die die Fitnessparks beschreiben.
-            output_filename (str, optional): Name der Ausgabedatei. Standard ist eine Datei mit dem heutigen Datum im Namen.
+            output_filename (str, optional): Pfad der Ausgabedatei. Standard ist eine Datei mit dem heutigen Datum im Namen
+                                             im Ordner `data`.
         """
         self.parks = parks
         if output_filename is None:
-            self.output_filename = (
-                "Fitnespark_Belegung_%s.csv" % dt.datetime.now().strftime("%Y-%m-%d")
+            self.output_filename = os.path.join(
+                fitnesspark_db.DATA_DIR,
+                "Fitnespark_Belegung_%s.csv" % dt.datetime.now().strftime("%Y-%m-%d"),
             )
         else:
             self.output_filename = output_filename
         self.header = ["parkname", "anzahl", "current_datetime"]
+        self.db_conn = None
 
     def create_header_if_not_exists(self):
         """
         Schreibt die Kopfzeile in die CSV-Datei, wenn die Datei neu oder leer ist.
         """
+        os.makedirs(os.path.dirname(self.output_filename), exist_ok=True)  # Datenordner anlegen, falls er fehlt
         file_exists = os.path.exists(self.output_filename)
         file_is_empty = not file_exists or os.path.getsize(self.output_filename) == 0
         if file_is_empty:
@@ -57,7 +69,7 @@ class FitnessParkScraper:
 
     def fetch_and_store_url_data(self, park):
         """
-        Ruft die Daten eines einzelnen Parks ab und hängt sie an die CSV-Datei an.
+        Ruft die Daten eines einzelnen Parks ab und speichert sie in der CSV-Datei (Sicherung) und in der Datenbank.
 
         Args:
             park (dict): Dictionary mit dem Namen und der URL des Parks.
@@ -81,6 +93,8 @@ class FitnessParkScraper:
                 ) as csvfile:
                     writer = csv.writer(csvfile)
                     writer.writerow([park["Name"], data, current_datetime])
+                # Zusätzlich in die Datenbank schreiben; ein Fehler dort lässt die CSV-Sicherung unberührt
+                self.store_in_database(park["Name"], data, current_datetime)
                 print(
                     f"Data from {park['URL']} successfully saved in '{self.output_filename}' at {current_datetime}"
                 )
@@ -96,13 +110,32 @@ class FitnessParkScraper:
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
 
+    def store_in_database(self, park_name, occupancy, current_datetime):
+        """
+        Schreibt einen Messwert in die SQLite-Datenbank. Fehler werden gemeldet, brechen den Lauf aber nicht ab.
+        """
+        if self.db_conn is None:
+            return
+        try:
+            fitnesspark_db.insert_rows(
+                self.db_conn, [(park_name, int(occupancy), current_datetime, LOAD_USER)]
+            )
+        except (sqlite3.Error, ValueError, TypeError) as e:
+            print(f"Fehler beim Schreiben in die Datenbank für {park_name}: {e}")
+
     def run(self):
         """
         Geht die Liste der Parks durch und ruft für jeden die Daten ab.
         """
         self.create_header_if_not_exists()
-        for park in self.parks:
-            self.fetch_and_store_url_data(park)
+        # Legt Datenordner, Datenbankdatei und Tabelle bei Bedarf an
+        self.db_conn = fitnesspark_db.open_database()
+        try:
+            for park in self.parks:
+                self.fetch_and_store_url_data(park)
+        finally:
+            self.db_conn.close()  # Verbindung auch bei einem Fehler wieder schliessen
+            self.db_conn = None
 
 
 if __name__ == "__main__":

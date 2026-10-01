@@ -3,20 +3,49 @@
 Ablauf: Alle *.csv aus dem Ordner `data` werden eingelesen und in die Tabelle `besucher` geschrieben. Das ist
 nützlich, um ältere CSV-Dateien nachträglich zu laden. Die Datenbank (data/fitnessparks.db) wird mit Ordner und
 Tabelle automatisch angelegt, es wird kein Datenbankserver und kein Passwort benötigt. Bereits vorhandene Zeilen
-werden übersprungen, der Import kann also gefahrlos wiederholt werden.
+werden übersprungen, der Import kann also gefahrlos wiederholt werden. Es werden keine Zusatzpakete benötigt.
 """
+import csv
+import datetime as dt
 import glob
 import os
 import sqlite3
 import sys
-
-import pandas as pd
 
 # Das gemeinsame Datenbankmodul liegt eine Ebene höher
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import fitnesspark_db  # noqa: E402
 
 LOAD_USER = 'PythonScript'  # Benutzer, der den Ladevorgang durchführt
+
+
+def read_csv_rows(file, load_user):
+    """
+    Liest eine CSV-Datei (Kopfzeile, danach je Zeile: Park, Belegung, Zeitstempel) und gibt die Zeilen als Tupel
+    für die Datenbank zurück. Bei einer fehlerhaften Zeile wird ein ValueError mit der Zeilennummer ausgelöst.
+    """
+    rows = []
+    with open(file, newline='', encoding='utf-8-sig') as csvfile:  # utf-8-sig entfernt ein evtl. vorhandenes BOM
+        reader = csv.reader(csvfile)
+        next(reader, None)  # Kopfzeile überspringen
+        for line_number, row in enumerate(reader, start=2):
+            if not row:  # Leerzeilen ignorieren
+                continue
+            # Sicherstellen, dass die Zeile die erwarteten drei Spalten hat
+            if len(row) != 3:
+                raise ValueError(f"Zeile {line_number}: 3 Spalten erwartet, gefunden: {len(row)}")
+            park, belegung, timestamp = row
+            try:
+                # Datentypen absichern: Text, Ganzzahl und Zeitstempel als ISO-Text mit Leerzeichen
+                rows.append((
+                    park,
+                    int(float(belegung)),
+                    dt.datetime.fromisoformat(timestamp).isoformat(sep=' '),
+                    load_user,
+                ))
+            except ValueError as e:
+                raise ValueError(f"Zeile {line_number}: ungültiger Wert ({e})") from e
+    return rows
 
 
 def load_csv_to_sqlite(csv_dir, db_conn, load_user):
@@ -36,23 +65,7 @@ def load_csv_to_sqlite(csv_dir, db_conn, load_user):
     for file in files:
         print(f"Verarbeite Datei: {file}")
         try:
-            df = pd.read_csv(file)
-            # Sicherstellen, dass die Datei die erwarteten drei Spalten hat, und sie passend zur Tabelle benennen
-            if len(df.columns) != 3:
-                raise ValueError(f"3 Spalten erwartet, gefunden: {len(df.columns)}")
-            df.columns = ['fitnesspark', 'belegung', 'Timestamp']
-
-            # Zeilen in Tupel umwandeln und Datentypen absichern (Text, Ganzzahl, Zeitstempel als ISO-Text)
-            rows = [
-                (
-                    str(row.fitnesspark),
-                    int(row.belegung),
-                    pd.Timestamp(row.Timestamp).isoformat(sep=' '),
-                    load_user,
-                )
-                for row in df.itertuples(index=False)
-            ]
-
+            rows = read_csv_rows(file, load_user)
             inserted = fitnesspark_db.insert_rows(db_conn, rows)
             total_rows_inserted += inserted
             print(f"   -> {inserted} Zeilen erfolgreich eingefügt ({len(rows) - inserted} bereits vorhanden).")

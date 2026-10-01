@@ -45,7 +45,7 @@ class FitnessParkScraper:
         if output_filename is None:
             self.output_filename = os.path.join(
                 fitnesspark_db.DATA_DIR,
-                "Fitnespark_Belegung_%s.csv" % dt.datetime.now().strftime("%Y-%m-%d"),
+                "Fitnesspark_Belegung_%s.csv" % dt.datetime.now().strftime("%Y-%m-%d"),
             )
         else:
             self.output_filename = output_filename

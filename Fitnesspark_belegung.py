@@ -1,7 +1,7 @@
 """Liest die aktuelle Auslastung der Fitnesspark-Standorte aus und hängt sie an eine CSV-Datei an.
 
 Pro Tag wird eine eigene Datei (Fitnespark_Belegung_JJJJ-MM-TT.csv) angelegt. Das Skript ist für den regelmässigen
-Aufruf gedacht, etwa per Aufgabenplanung. Die CSV-Dateien können danach mit fitnessparks/fitnesspark_csv_to_mariadb.py
+Aufruf gedacht, etwa per Aufgabenplanung. Die CSV-Dateien können danach mit fitnessparks/fitnesspark_csv_to_sqlite.py
 in die Datenbank geladen werden.
 """
 import csv

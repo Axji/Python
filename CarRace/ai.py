@@ -13,6 +13,7 @@ import constant
 
 SENSOR_ANGLE = 40     # Winkel der seitlichen Fühler in Grad
 SENSOR_RANGE = 150    # Reichweite der Fühler in Pixeln
+SPEED_LOOKAHEAD = 260 # So weit voraus schaut die KI für das Wunschtempo (früher bremsen vor engen Kurven)
 SENSOR_STEP = 4       # Schrittgrösse beim Abtasten
 STEER_TOLERANCE = 8   # Unterschied links/rechts, ab dem gelenkt wird
 MISTAKE_CHANCE = 0.002  # Wahrscheinlichkeit pro Bild für einen Fahrfehler
@@ -20,6 +21,7 @@ CAR_BRAKE_DISTANCE = 28  # Näher als das hinter einem Auto: nicht schneller als
 OVERTAKE_RANGE = 80    # Ein langsameres Auto so weit voraus (in Pixeln) löst ein Überholmanöver aus
 OVERTAKE_LANE = 20     # Seitlicher Abstand, bis zu dem ein Auto als "direkt voraus" gilt
 OVERTAKE_PUSH = 40     # Wie stark zur Überholseite gelenkt wird (wirkt wie lane_bias)
+OVERTAKE_MIN_FRONT = 100  # Ist geradeaus weniger Strasse frei (Kurve), wird nicht überholt
 OVERTAKE_HOLD = 20     # Bilder, die das Manöver nach dem letzten Sichtkontakt noch anhält
 AVOID_RANGE = 48       # Abstand der Autos (Mitte zu Mitte), ab dem seitlich ausgewichen wird
 AVOID_PUSH = 60        # Stärke des Ausweichens (wirkt wie lane_bias, wird mit der Vorsicht multipliziert)
@@ -56,13 +58,13 @@ class AIDriver:
         self.overtake_side = 0    # -1 = links überholen, 1 = rechts, 0 = kein Manöver
         self.overtake_frames = 0  # Restdauer des Manövers
 
-    def distance(self, track, offset):
+    def distance(self, track, offset, max_distance=SENSOR_RANGE):
         """Freie Strecke in Pixeln in Richtung Blickwinkel + offset (Grad), gemessen auf dem Streckenbild."""
         angle = math.radians(self.car.view_angle + offset)
         cx = self.car.pos_x + constant.PLAYERWITH / 2
         cy = self.car.pos_y + constant.PLAYERHIGH / 2
         dist = 0
-        while dist < SENSOR_RANGE:
+        while dist < max_distance:
             x = int(cx + math.cos(angle) * dist)
             y = int(cy + math.sin(angle) * dist)
             if not (0 <= x < track.get_width() and 0 <= y < track.get_height()):
@@ -141,7 +143,13 @@ class AIDriver:
             self.overtake_side = 0
 
         # Lenken: Richtung mit mehr Platz (lane_bias verschiebt die Wunschspur)
-        diff = right - left + self.lane_bias + self.overtake_side * OVERTAKE_PUSH + self._avoid_push(left, right)
+        # Überholt wird nur auf Geraden und nicht zur Strassenkante hin (in Kurven zieht der Überholschub sonst nach aussen)
+        overtake_push = self.overtake_side * OVERTAKE_PUSH
+        if (front < OVERTAKE_MIN_FRONT
+                or (overtake_push > 0 and right < WALL_MARGIN)
+                or (overtake_push < 0 and left < WALL_MARGIN)):
+            overtake_push = 0
+        diff = right - left + self.lane_bias + overtake_push + self._avoid_push(left, right)
         if diff > STEER_TOLERANCE:
             self.car.delta_view_angle = constant.STEERINGVALUE
         elif diff < -STEER_TOLERANCE:
@@ -158,7 +166,8 @@ class AIDriver:
             self.mistake_steer = random.choice((-1, 1)) * constant.STEERINGVALUE
 
         # Tempo: Wunschtempo wächst mit der freien Strasse geradeaus (Autos zählen nicht), plus etwas Rauschen
-        target = (MIN_SPEED + (constant.MAXSPEED * self.car.topspeed_factor - MIN_SPEED) * front / SENSOR_RANGE) * self.boldness
+        target = (MIN_SPEED + (constant.MAXSPEED * self.car.topspeed_factor - MIN_SPEED)
+                  * self.distance(track, 0, SPEED_LOOKAHEAD) / SPEED_LOOKAHEAD) * self.boldness
         target *= random.uniform(1 - 0.05 * self.variation, 1 + 0.05 * self.variation)
         if ahead and ahead[0] < CAR_BRAKE_DISTANCE and abs(ahead[1]) < 12:
             target = min(target, max(ahead[2].speed, 0))  # Auffahren vermeiden, solange noch kein Platz zum Vorbeifahren

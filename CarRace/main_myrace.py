@@ -18,6 +18,7 @@ from pygame.locals import *
 
 import constant
 import car
+import ai
 
 pygame.init()
 
@@ -34,6 +35,21 @@ fenster.fill(bg)
 # Das Auto des Spielers; weitere Autos könnten in `playerlist` ergänzt werden
 humanplayer = car.Car("Player", "car_2.png")
 playerlist = [humanplayer]
+
+# KI-Autos: jedes bekommt einen AIDriver, der es steuert (Parameter für unterschiedliches Fahrverhalten)
+aidrivers = []
+START_DELAY = 40  # Bilder Abstand, mit denen die KI-Autos nacheinander losfahren (alle starten am selben Punkt)
+waiting = {}      # Auto -> noch zu wartende Bilder bis zum Start
+# Name, Fahrstil und Farbe (der Spieler ist rot; Grün/Gelb/Grau sind Wiese, Ziellinie und Strasse)
+for n, (ai_name, boldness, color) in enumerate([("AI vorsichtig", 0.8, (0, 110, 255)),
+                                                ("AI mutig", 1.0, (180, 60, 230)),
+                                                ("AI normal", 0.9, (0, 220, 220))], start=1):
+    ai_car = car.Car(ai_name, "car_1.png", color)
+    playerlist.append(ai_car)
+    aidrivers.append(ai.AIDriver(ai_car, boldness=boldness, obstacles=playerlist))
+    waiting[ai_car] = n * START_DELAY
+
+explosions = []   # [x, y, verbleibende Bilder] der sichtbaren Zusammenstösse
 
 # Alle vorhandenen Strecken track_1.png, track_2.png, ... laden
 tracks = []
@@ -88,6 +104,9 @@ while running:
 
                 for player in playerlist:
                     player.reset()
+                for n, driver in enumerate(aidrivers, start=1):
+                    waiting[driver.car] = n * START_DELAY
+                explosions.clear()
 
             # Taste gedrückt: Gas, Bremse bzw. Lenkung einschalten
             if event.key == K_UP:
@@ -113,11 +132,37 @@ while running:
     # Rennstrecke rendern
     fenster.blit(tracks[activeTrackNumber], (0, 0))
 
+    # KI-Fahrer entscheiden anhand der Strecke, bevor die Autos bewegt werden
+    for driver in aidrivers:
+        if waiting[driver.car] == 0:
+            driver.drive(tracks[activeTrackNumber])
+
     # Alle Player updaten. Die Strecke muss angezeigt werden, damit je nach Boden ein Malus berechnet wird.
+    # Noch wartende KI-Autos stehen am Start (ohne Kollision, damit sie nicht festkleben).
+    car.update_catchup([p for p in playerlist if waiting.get(p, 0) == 0], fps)
     for player in playerlist:
+        if waiting.get(player, 0) > 0:
+            waiting[player] -= 1
+            continue
         player.setmalus(getmalus(player.pos_x, player.pos_y))
         player.update()
+
+    # Zusammenstösse zwischen allen Autopaaren erkennen
+    active = [p for p in playerlist if waiting.get(p, 0) == 0]
+    for i, first in enumerate(active):
+        for second in active[i + 1:]:
+            hit = car.resolve_collision(first, second)
+            if hit:
+                explosions.append([hit[0], hit[1], 10])
+
+    for player in playerlist:
         fenster.blit(player.getimage(), player.getPosAsRect())
+
+    # Explosionsbild kurz am Kollisionspunkt anzeigen
+    for boom in explosions:
+        fenster.blit(explosion, explosion.get_rect(center=(boom[0], boom[1])))
+        boom[2] -= 1
+    explosions[:] = [b for b in explosions if b[2] > 0]
 
     pygame.display.update()
 

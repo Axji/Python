@@ -15,6 +15,14 @@ MALUSFACTOR = 0.3      # Faktor auf die Höchstgeschwindigkeit, wenn das Auto ne
 
 COLLISION_SPEED_FACTOR = 0.4  # Beide Autos behalten bei einem Zusammenstoss diesen Anteil ihres Tempos
 
+# Lenkwiderstand: Lenken kostet Tempo, anfangs wenig, je länger am Stück in eine Richtung gelenkt wird, desto mehr.
+# Der Verlust ist ein Anteil des Tempos pro Bild; bei Dauerlenken pendelt sich das Tempo bei etwa
+# ACCELERATIONVALUE / STEER_DRAG_MAX ein (enger Bogen = langsam).
+STEER_DRAG_BASE = 0.004    # Tempoverlust-Anteil pro Bild beim Lenken (bei vollem Lenkeinschlag)
+STEER_DRAG_GROWTH = 0.002  # Zusätzlicher Anteil pro Bild, das schon am Stück gelenkt wird
+STEER_DRAG_MAX = 0.07      # Obergrenze des Verlust-Anteils pro Bild
+STEER_RECOVERY = 2         # So viele Lenk-Bilder werden pro Bild ohne Lenken wieder "vergessen"
+
 # Aufholjagd: Autos weit hinter dem Führenden bekommen ein höheres Tempolimit
 CATCHUP_MAX_BOOST = 0.5     # Zusätzliches Tempolimit (0.5 = bis zu 50 % schneller)
 CATCHUP_MIN_GAP = 40        # Rückstand in Pixeln, ab dem der Bonus beginnt

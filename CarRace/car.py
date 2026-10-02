@@ -30,6 +30,8 @@ class Car:
     name = ""
     distance_driven = 0  # Gesamte gefahrene Strecke in Pixeln (Mass für die Rennposition)
     topspeed_factor = 1  # Aufholbonus aufs Tempolimit (1 = normal)
+    steer_direction = 0  # Richtung des laufenden Bogens (-1 links, 1 rechts)
+    steer_frames = 0     # Wie lange (in Bildern) schon am Stück gelenkt wird; bestimmt den Lenkwiderstand
     is_neural = False    # True bei der lernenden KI (kollidiert nicht mit anderen KI-Autos)
     activeMalusFactor = 1  # 1 = normaler Boden, kleiner als 1 = Strafe (Tempolimit sinkt)
 
@@ -44,6 +46,8 @@ class Car:
         if color:
             self.carImage = recolor(self.carImage, color)
         self.distance_driven = 0
+        self.steer_frames = 0
+        self.steer_direction = 0
         self.topspeed_factor = 1
         self.delta_speed = 0
         self.delta_view_angle = 0
@@ -57,12 +61,15 @@ class Car:
         self.pos_x = constant.STARTPOSX
         self.pos_y = constant.STARTPOSY
         self.distance_driven = 0
+        self.steer_frames = 0
+        self.steer_direction = 0
         self.topspeed_factor = 1
         pass
 
     def update(self):
         """Berechnet die neue Geschwindigkeit, Richtung und Position für das nächste Bild."""
         self.speed += self.delta_speed
+        self.apply_steering_drag()
         self.distance_driven += self.speed
 
         self.speedLimiter()
@@ -74,6 +81,24 @@ class Car:
             math.radians(self.view_angle)) * self.speed)
         self.pos_y += round(math.sin(math.radians(self.view_angle)) * self.speed)
         pass
+
+    def apply_steering_drag(self):
+        """Lenken kostet Tempo: anfangs wenig, mit der Dauer des Lenkens in eine Richtung immer mehr.
+
+        So muss man zwischen einem weiten Bogen mit hohem Tempo und einem engen Bogen mit Tempoverlust wählen.
+        Ohne Lenken wird die "Lenkdauer" wieder abgebaut.
+        """
+        steer = min(1, abs(self.delta_view_angle) / constant.STEERINGVALUE)  # 0 = geradeaus, 1 = voller Einschlag
+        if steer == 0:
+            self.steer_frames = max(0, self.steer_frames - constant.STEER_RECOVERY)
+            return
+        direction = 1 if self.delta_view_angle > 0 else -1
+        if direction != self.steer_direction:  # Richtungswechsel: neuer Bogen, Lenkdauer beginnt von vorn
+            self.steer_frames = 0
+            self.steer_direction = direction
+        self.steer_frames += steer
+        drag = min(constant.STEER_DRAG_MAX, constant.STEER_DRAG_BASE + constant.STEER_DRAG_GROWTH * self.steer_frames)
+        self.speed *= 1 - drag * steer
 
     def topspeed_limit(self):
         """Aktuelles Tempolimit vorwärts: Höchstgeschwindigkeit mal Boden-Malus mal Aufholbonus."""

@@ -10,7 +10,8 @@ beim nächsten Training sowie im Spiel (main_myrace.py) wieder verwendet.
 Aufruf (im Ordner CarRace):
     python train_neural.py --races 30            # 30 Rennen, ohne Fenster (schnell)
     python train_neural.py --races 10 --show     # mit Fenster zum Zuschauen
-    python train_neural.py --fresh               # ohne das gespeicherte Netz neu anfangen
+    python train_neural.py --fresh               # ohne das gespeicherte Netz neu anfangen (altes wird gesichert)
+    python train_neural.py --reset               # KI zurücksetzen: Netz mit Zeitstempel sichern und löschen
 """
 import argparse
 import os
@@ -174,13 +175,26 @@ def main():
     parser.add_argument("--max-frames", type=int, default=1200, help="Höchstdauer eines Rennens in Bildern")
     parser.add_argument("--track", type=int, default=1, help="Nummer der Strecke (track_N.png)")
     parser.add_argument("--show", action="store_true", help="Rennen in einem Fenster anzeigen")
-    parser.add_argument("--fresh", action="store_true", help="Gespeichertes Netz ignorieren und neu anfangen")
+    parser.add_argument("--fresh", action="store_true",
+                        help="Gespeichertes Netz ignorieren und neu anfangen (das alte wird vorher gesichert)")
+    parser.add_argument("--reset", action="store_true",
+                        help="KI zurücksetzen: gespeichertes Netz mit Zeitstempel sichern und löschen, dann beenden")
     args = parser.parse_args()
+
+    import neural_ai
+
+    if args.reset:
+        backup = neural_ai.reset_brain()
+        print(f"KI zurückgesetzt. Altes Netz gesichert in {backup}" if backup else "Kein gespeichertes Netz, nichts zurückgesetzt.")
+        return
+    if args.fresh:
+        backup = neural_ai.backup_brain()
+        if backup:
+            print(f"Altes Netz gesichert in {backup}")
 
     if not args.show:
         os.environ["SDL_VIDEODRIVER"] = "dummy"
     import pygame
-    import neural_ai
     import track_map as tm
 
     pygame.init()

@@ -7,6 +7,8 @@ import json
 import math
 import os
 import random
+import shutil
+import time
 
 import constant
 
@@ -60,6 +62,28 @@ def save_brain(net, fitness, path=BRAIN_FILE, **info):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"layers": list(net.layers), "weights": net.weights, "fitness": fitness, **info}, f, indent=1)
+
+
+def backup_brain(path=BRAIN_FILE):
+    """Kopiert das gespeicherte Netz nach brains/best_brain_JJJJMMTT_HHMMSS.json. Gibt den Pfad zurück oder None."""
+    if not os.path.exists(path):
+        return None
+    base, ext = os.path.splitext(path)
+    backup = f"{base}_{time.strftime('%Y%m%d_%H%M%S')}{ext}"
+    shutil.copy2(path, backup)
+    return backup
+
+
+def reset_brain(path=BRAIN_FILE):
+    """Setzt die KI zurück: sichert das gespeicherte Netz mit Zeitstempel und löscht es dann.
+
+    Danach gibt es kein gespeichertes Netz mehr; das nächste Training beginnt bei null.
+    Gibt den Pfad der Sicherung zurück oder None, wenn es nichts zu sichern gab.
+    """
+    backup = backup_brain(path)
+    if backup:
+        os.remove(path)
+    return backup
 
 
 def load_brain(path=BRAIN_FILE):

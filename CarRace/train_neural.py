@@ -59,6 +59,7 @@ class Race:
         self.last_gain = [0] * len(nets)        # Bild des letzten Fortschritts
         self.alive = [True] * len(nets)
         self.finish_frame = [None] * len(nets)
+        self.end_frame = [None] * len(nets)     # Bild, in dem das Auto ausgeschieden oder im Ziel ist
 
     @property
     def over(self):
@@ -75,6 +76,7 @@ class Race:
             progress = self.track_map.progress_at(c.pos_x + constant.PLAYERWITH / 2, c.pos_y + constant.PLAYERHIGH / 2)
             if progress < 0:
                 self.alive[i] = False          # von der Strasse abgekommen
+                self.end_frame[i] = self.frame
                 continue
             if progress > self.best[i]:
                 self.best[i] = progress
@@ -82,18 +84,41 @@ class Race:
             if self.best[i] >= self.track_map.finish_progress:
                 self.alive[i] = False
                 self.finish_frame[i] = self.frame   # im Ziel
+                self.end_frame[i] = self.frame
             elif self.frame - self.last_gain[i] > STUCK_FRAMES:
                 self.alive[i] = False          # kommt nicht mehr voran
+                self.end_frame[i] = self.frame
 
     def results(self):
-        """Pro Netz (Bewertung, im Ziel?, Zielbild)."""
+        """Pro Netz (Bewertung, im Ziel?, Zielbild, Bilder bis zum Ende des Autos)."""
         out = []
         for i in range(len(self.cars)):
             fitness = min(self.best[i], self.track_map.finish_progress)
             if self.finish_frame[i]:
                 fitness += (self.max_frames - self.finish_frame[i]) * FINISH_BONUS
-            out.append((fitness, self.finish_frame[i] is not None, self.finish_frame[i]))
+            out.append((fitness, self.finish_frame[i] is not None, self.finish_frame[i],
+                        self.end_frame[i] or self.frame))
         return out
+
+
+def draw_frames_per_car(screen, results, order, font):
+    """Legt eine Tabelle über das Fenster: Bilder jedes Autos (beste zuerst) und ob es im Ziel war."""
+    import pygame
+
+    rows = []
+    for rank, i in enumerate(order, start=1):
+        fitness, finished, finish_frame, end_frame = results[i]
+        rows.append((f"{rank:2d}. Auto {i:2d}: {end_frame:4d} Bilder  " + ("Ziel" if finished else "ausgeschieden"),
+                     (120, 255, 120) if finished else (255, 140, 140)))
+    per_column = (len(rows) + 1) // 2
+    panel = pygame.Surface((2 * 330 + 20, per_column * 22 + 40))
+    panel.fill((0, 0, 0))
+    panel.blit(font.render("Bilder je Auto in diesem Rennen", True, (255, 255, 0)), (10, 8))
+    for n, (text, color) in enumerate(rows):
+        panel.blit(font.render(text, True, color), (10 + (n // per_column) * 330, 34 + (n % per_column) * 22))
+    panel.set_alpha(225)
+    screen.blit(panel, (constant.WINDOWWITH // 2 - panel.get_width() // 2, 80))
+    pygame.display.update()
 
 
 def run_race(nets, track_map, max_frames, screen=None, generation=0):
@@ -117,7 +142,16 @@ def run_race(nets, track_map, max_frames, screen=None, generation=0):
             pygame.display.set_caption(f"Training - Rennen {generation}, Bild {race.frame}, aktiv: {sum(race.alive)}")
             pygame.display.update()
             clock.tick(FPS * 2)
-    return race.results()
+    results = race.results()
+    if screen is not None:  # Ergebnis-Tabelle kurz anzeigen
+        order = sorted(range(len(nets)), key=lambda i: -results[i][0])
+        draw_frames_per_car(screen, results, order, pygame.font.SysFont(None, 22))
+        for _ in range(FPS * 3):
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                    raise KeyboardInterrupt
+            clock.tick(FPS)
+    return results
 
 
 def next_generation(ranked, population):
@@ -181,6 +215,10 @@ def main():
             mean = sum(r[0] for r in results) / len(results)
             print(f"Rennen {race:3d}/{args.races}: beste {top[0]:6.0f} | Schnitt {mean:6.0f} | im Ziel {finished:2d}/{len(nets)}"
                   + (f" | schnellste Zeit {top[2]} Bilder" if top[1] else "") + f" | {time.time() - t0:.1f} s")
+            in_goal = sorted(r[3] for r in results if r[1])
+            out = sorted((r[3] for r in results if not r[1]), reverse=True)
+            print("   Bilder im Ziel:        " + (" ".join(map(str, in_goal)) or "-"))
+            print("   Bilder ausgeschieden:  " + (" ".join(map(str, out)) or "-"))
             if top[0] > best_fitness:
                 best_fitness, best_net = top[0], ranked[0].copy()
                 neural_ai.save_brain(best_net, best_fitness, races=total_races + race, track=args.track)

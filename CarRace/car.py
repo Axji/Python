@@ -68,7 +68,7 @@ class Car:
 
     def update(self):
         """Berechnet die neue Geschwindigkeit, Richtung und Position für das nächste Bild."""
-        self.speed += self.delta_speed
+        self.speed += self.effective_acceleration()
         self.apply_steering_drag()
         self.distance_driven += self.speed
 
@@ -81,6 +81,20 @@ class Car:
             math.radians(self.view_angle)) * self.speed)
         self.pos_y += round(math.sin(math.radians(self.view_angle)) * self.speed)
         pass
+
+    def effective_acceleration(self):
+        """`delta_speed`, aber Gas wird ab 80 % des Höchsttempos schwächer (beim Höchsttempo nur noch 10 %).
+
+        Bremsen und Rückwärtsfahren sind nicht betroffen.
+        """
+        if self.delta_speed <= 0:
+            return self.delta_speed
+        top = constant.MAXSPEED * self.topspeed_factor
+        start = constant.ACCEL_FALLOFF_START * top
+        if self.speed <= start:
+            return self.delta_speed
+        share = min(1, (self.speed - start) / (top - start))  # 0 bei 80 %, 1 beim Höchsttempo
+        return self.delta_speed * (1 - (1 - constant.ACCEL_FALLOFF_MIN) * share)
 
     def apply_steering_drag(self):
         """Lenken kostet Tempo: anfangs wenig, mit der Dauer des Lenkens in eine Richtung immer mehr.

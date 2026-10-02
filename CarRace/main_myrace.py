@@ -19,6 +19,8 @@ from pygame.locals import *
 import constant
 import car
 import ai
+import neural_ai
+import track_map
 
 pygame.init()
 
@@ -48,6 +50,17 @@ for n, (ai_name, boldness, color) in enumerate([("AI vorsichtig", 0.8, (0, 110, 
     playerlist.append(ai_car)
     aidrivers.append(ai.AIDriver(ai_car, boldness=boldness, obstacles=playerlist))
     waiting[ai_car] = n * START_DELAY
+
+# Lernende KI: fährt mit dem gespeicherten Netz (brains/best_brain.json, erzeugt mit train_neural.py), falls vorhanden
+neural_driver = None
+brain, _ = neural_ai.load_brain()
+if brain:
+    neural_car = car.Car("AI lernend", "car_1.png", (255, 130, 200))
+    neural_car.is_neural = True
+    playerlist.append(neural_car)
+    neural_driver = neural_ai.NeuralDriver(neural_car, brain)
+    waiting[neural_car] = (len(aidrivers) + 1) * START_DELAY
+track_maps = {}   # Streckennummer -> TrackMap (wird erst gebraucht, wenn die lernende KI fährt)
 
 explosions = []   # [x, y, verbleibende Bilder] der sichtbaren Zusammenstösse
 
@@ -106,6 +119,8 @@ while running:
                     player.reset()
                 for n, driver in enumerate(aidrivers, start=1):
                     waiting[driver.car] = n * START_DELAY
+                if neural_driver:
+                    waiting[neural_driver.car] = (len(aidrivers) + 1) * START_DELAY
                 explosions.clear()
 
             # Taste gedrückt: Gas, Bremse bzw. Lenkung einschalten
@@ -137,9 +152,14 @@ while running:
         if waiting[driver.car] == 0:
             driver.drive(tracks[activeTrackNumber])
 
+    if neural_driver and waiting[neural_driver.car] == 0:
+        if activeTrackNumber not in track_maps:
+            track_maps[activeTrackNumber] = track_map.TrackMap(tracks[activeTrackNumber])
+        neural_driver.drive(track_maps[activeTrackNumber])
+
     # Alle Player updaten. Die Strecke muss angezeigt werden, damit je nach Boden ein Malus berechnet wird.
     # Noch wartende KI-Autos stehen am Start (ohne Kollision, damit sie nicht festkleben).
-    car.update_catchup([p for p in playerlist if waiting.get(p, 0) == 0], fps)
+    car.update_catchup([p for p in playerlist if waiting.get(p, 0) == 0 and not p.is_neural], fps)
     for player in playerlist:
         if waiting.get(player, 0) > 0:
             waiting[player] -= 1
@@ -151,6 +171,9 @@ while running:
     active = [p for p in playerlist if waiting.get(p, 0) == 0]
     for i, first in enumerate(active):
         for second in active[i + 1:]:
+            # Die lernende KI kollidiert nicht mit anderen KI-Autos, nur mit dem Spieler
+            if (first.is_neural or second.is_neural) and humanplayer not in (first, second):
+                continue
             hit = car.resolve_collision(first, second)
             if hit:
                 explosions.append([hit[0], hit[1], 10])

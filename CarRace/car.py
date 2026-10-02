@@ -30,6 +30,7 @@ class Car:
     name = ""
     distance_driven = 0  # Gesamte gefahrene Strecke in Pixeln (Mass für die Rennposition)
     topspeed_factor = 1  # Aufholbonus aufs Tempolimit (1 = normal)
+    is_neural = False    # True bei der lernenden KI (kollidiert nicht mit anderen KI-Autos)
     activeMalusFactor = 1  # 1 = normaler Boden, kleiner als 1 = Strafe (Tempolimit sinkt)
 
     def __init__(self, name, image, color=None):

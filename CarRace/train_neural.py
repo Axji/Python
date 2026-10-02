@@ -38,69 +38,86 @@ PINK = (255, 130, 200)
 ORANGE = (255, 150, 0)
 
 
+class Race:
+    """Ein Rennen, bei dem alle Netze gleichzeitig starten. `step()` rechnet ein Bild weiter."""
+
+    def __init__(self, nets, track_map, max_frames, colors=None):
+        import car
+        import neural_ai
+
+        self.track_map = track_map
+        self.max_frames = max_frames
+        self.frame = 0
+        colors = colors or [PINK] * len(nets)
+        self.cars = [car.Car(f"Net {i}", "car_1.png", colors[i]) for i in range(len(nets))]
+        for c in self.cars:  # alle starten gleichzeitig, aber nicht exakt gleich
+            c.pos_x += random.uniform(-START_JITTER_POS, START_JITTER_POS)
+            c.pos_y += random.uniform(-START_JITTER_POS, START_JITTER_POS)
+            c.view_angle = random.uniform(-START_JITTER_ANGLE, START_JITTER_ANGLE)
+        self.drivers = [neural_ai.NeuralDriver(c, n) for c, n in zip(self.cars, nets)]
+        self.best = [0] * len(nets)             # bester Fortschritt je Auto
+        self.last_gain = [0] * len(nets)        # Bild des letzten Fortschritts
+        self.alive = [True] * len(nets)
+        self.finish_frame = [None] * len(nets)
+
+    @property
+    def over(self):
+        """True, wenn alle Autos ausgeschieden oder im Ziel sind oder die Höchstdauer erreicht ist."""
+        return not any(self.alive) or self.frame >= self.max_frames
+
+    def step(self):
+        self.frame += 1
+        for i, (c, d) in enumerate(zip(self.cars, self.drivers)):
+            if not self.alive[i]:
+                continue
+            d.drive(self.track_map)
+            c.update()
+            progress = self.track_map.progress_at(c.pos_x + constant.PLAYERWITH / 2, c.pos_y + constant.PLAYERHIGH / 2)
+            if progress < 0:
+                self.alive[i] = False          # von der Strasse abgekommen
+                continue
+            if progress > self.best[i]:
+                self.best[i] = progress
+                self.last_gain[i] = self.frame
+            if self.best[i] >= self.track_map.finish_progress:
+                self.alive[i] = False
+                self.finish_frame[i] = self.frame   # im Ziel
+            elif self.frame - self.last_gain[i] > STUCK_FRAMES:
+                self.alive[i] = False          # kommt nicht mehr voran
+
+    def results(self):
+        """Pro Netz (Bewertung, im Ziel?, Zielbild)."""
+        out = []
+        for i in range(len(self.cars)):
+            fitness = min(self.best[i], self.track_map.finish_progress)
+            if self.finish_frame[i]:
+                fitness += (self.max_frames - self.finish_frame[i]) * FINISH_BONUS
+            out.append((fitness, self.finish_frame[i] is not None, self.finish_frame[i]))
+        return out
+
+
 def run_race(nets, track_map, max_frames, screen=None, generation=0):
-    """Lässt alle Netze gleichzeitig ein Rennen fahren. Gibt pro Netz (Bewertung, im Ziel?, Zielbild) zurück."""
-    import car
-    import neural_ai
-
-    cars = [car.Car(f"Net {i}", "car_1.png", ORANGE if i == 0 else PINK) for i in range(len(nets))]
-    for c in cars:  # alle starten gleichzeitig, aber nicht exakt gleich
-        c.pos_x += random.uniform(-START_JITTER_POS, START_JITTER_POS)
-        c.pos_y += random.uniform(-START_JITTER_POS, START_JITTER_POS)
-        c.view_angle = random.uniform(-START_JITTER_ANGLE, START_JITTER_ANGLE)
-    drivers = [neural_ai.NeuralDriver(c, n) for c, n in zip(cars, nets)]
-    best = [0] * len(nets)             # bester Fortschritt je Auto
-    last_gain = [0] * len(nets)        # Bild des letzten Fortschritts
-    alive = [True] * len(nets)
-    finish_frame = [None] * len(nets)
-
-    clock = None
+    """Lässt alle Netze ein Rennen fahren (optional im Fenster). Gibt `Race.results()` zurück."""
+    colors = [ORANGE] + [PINK] * (len(nets) - 1)
+    race = Race(nets, track_map, max_frames, colors)
     if screen is not None:
         import pygame
         clock = pygame.time.Clock()
         track_image = pygame.image.load(f"track_{track_map.number}.png")
-
-    for frame in range(1, max_frames + 1):
-        if not any(alive):
-            break
-        for i, (c, d) in enumerate(zip(cars, drivers)):
-            if not alive[i]:
-                continue
-            d.drive(track_map)
-            c.update()
-            progress = track_map.progress_at(c.pos_x + constant.PLAYERWITH / 2, c.pos_y + constant.PLAYERHIGH / 2)
-            if progress < 0:
-                alive[i] = False          # von der Strasse abgekommen
-                continue
-            if progress > best[i]:
-                best[i] = progress
-                last_gain[i] = frame
-            if best[i] >= track_map.finish_progress:
-                alive[i] = False
-                finish_frame[i] = frame   # im Ziel
-            elif frame - last_gain[i] > STUCK_FRAMES:
-                alive[i] = False          # kommt nicht mehr voran
-
+    while not race.over:
+        race.step()
         if screen is not None:
-            import pygame
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                     raise KeyboardInterrupt
             screen.blit(track_image, (0, 0))
-            for i, c in enumerate(cars):
-                if alive[i] or finish_frame[i]:
+            for i, c in enumerate(race.cars):
+                if race.alive[i] or race.finish_frame[i]:
                     screen.blit(c.getimage(), c.getPosAsRect())
-            pygame.display.set_caption(f"Training - Rennen {generation}, Bild {frame}, aktiv: {sum(alive)}")
+            pygame.display.set_caption(f"Training - Rennen {generation}, Bild {race.frame}, aktiv: {sum(race.alive)}")
             pygame.display.update()
             clock.tick(FPS * 2)
-
-    results = []
-    for i in range(len(nets)):
-        fitness = min(best[i], track_map.finish_progress)
-        if finish_frame[i]:
-            fitness += (max_frames - finish_frame[i]) * FINISH_BONUS
-        results.append((fitness, finish_frame[i] is not None, finish_frame[i]))
-    return results
+    return race.results()
 
 
 def next_generation(ranked, population):

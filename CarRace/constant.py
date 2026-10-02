@@ -13,6 +13,14 @@ MAXSPEED = 10          # Höchstgeschwindigkeit vorwärts
 MAXSPEED_REVERSE = 5   # Höchstgeschwindigkeit rückwärts
 MALUSFACTOR = 0.3      # Faktor auf die Höchstgeschwindigkeit, wenn das Auto neben der Strasse fährt
 
+COLLISION_SPEED_FACTOR = 0.4  # Beide Autos behalten bei einem Zusammenstoss diesen Anteil ihres Tempos
+
+# Aufholjagd: Autos weit hinter dem Führenden bekommen ein höheres Tempolimit
+CATCHUP_MAX_BOOST = 0.5     # Zusätzliches Tempolimit (0.5 = bis zu 50 % schneller)
+CATCHUP_MIN_GAP = 40        # Rückstand in Pixeln, ab dem der Bonus beginnt
+CATCHUP_FULL_GAP = 300      # Rückstand in Pixeln, ab dem der volle Bonus gilt
+CATCHUP_DECAY_SECONDS = 1.5 # So lange sinkt der Bonus auf 0, wenn das Auto nicht mehr hinten liegt
+
 MAXANGLE = 4 / 8  # Maximaler Lenkwinkel (im Code aktuell nicht verwendet)
 
 # Startposition des Autos auf der Strecke

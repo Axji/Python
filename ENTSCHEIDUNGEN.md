@@ -1,8 +1,8 @@
 # Entscheidungen
 
 Hier steht, **warum** etwas so gelöst ist, wie es ist. Wie das Projekt funktioniert, steht in
-[DOKUMENTATION.md](DOKUMENTATION.md). Neue Einträge kommen **oben** an die Liste der jeweiligen Gruppe, mit fortlaufender
-Nummer.
+[DOKUMENTATION.md](DOKUMENTATION.md). Neue Einträge kommen **ans Ende** der passenden Gruppe und bekommen die nächste
+Nummer (A5, B9 usw.). Ein überholter Eintrag wird nicht gelöscht, sondern mit „Ersetzt durch …" markiert.
 
 Quellen: `PR #n` verweist auf einen Pull Request in <https://github.com/Axji/Python>, Kurzhashes auf Commits. Wo der
 Grund nur aus der Commit-Meldung bekannt ist, steht das dabei. Mit **Offen** markierte Einträge brauchen noch eine

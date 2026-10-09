@@ -42,6 +42,14 @@ gehört zur Standardbibliothek von Python.
 Speichern und sortiert die Imports. Mit **F5** wird die geöffnete Datei im Debugger gestartet. Empfohlene
 Erweiterungen: Python, Pylance, Ruff, Jupyter.
 
+**Prüfen:** Die Ruff-Regeln stehen in `pyproject.toml`. Lint und Tests laufen so (auch in GitHub Actions, `.github/workflows/ci.yml`):
+
+```bash
+.envScriptspython.exe -m pip install ruff pytest
+.envScriptsuff.exe check .
+.envScriptspython.exe -m pytest
+```
+
 > Die `venv` gehört nicht ins Repository (steht in `.gitignore`). Nach einem frischen Klon wird sie mit den Befehlen oben
 > neu aufgebaut.
 
@@ -201,7 +209,7 @@ Lädt monatliche Klimadaten von MeteoSchweiz.
 .\venv\Scripts\python.exe Weather\GetWeatherData.py          # Dateien auswerten
 ```
 
-- `GetWeatherData.py`: `get_files_from_web()` lädt je Station eine Textdatei nach `Weather/daten/` (Dateiname
+- `GetWeatherData.py`: `get_files_from_web()` lädt je Station eine Textdatei nach `Weather/daten/` (liegt nur lokal und steht in `.gitignore`; Dateiname
   `JJJJ-MM-TT_Station.txt`, Pause zwischen den Downloads, Zeitlimit 30 Sekunden). `parse_files()` liest die Dateien des
   neuesten Datums. Beim Start ist der Download-Aufruf auskommentiert.
 - `SqlLiteWD.py`: Klasse zum Schreiben in die SQLite-Tabelle `weather`, auch als `with`-Block nutzbar.
@@ -257,4 +265,4 @@ Nicht im Repository (stehen in `.gitignore`): `venv/`, `.idea/`, `.vs/`, `__pyca
 - Die Abrufe der Fitnesspark-Website und von MeteoSchweiz hängen von deren Adressen ab. Ändern sich diese, brechen die
   Skripte ab. Die MeteoSchweiz-Adresse in `config.ini` verwendet `http` und sollte geprüft werden.
 - Die Auswertung der Fitnesspark-Daten lädt Plotly aus dem Internet und ist offline nicht nutzbar.
-- Es gibt keine automatischen Tests. Geprüft wurde bisher von Hand und mit kurzen Testskripten.
+- Automatische Tests gibt es nur für `sort.py` und `global_lib.py` (Ordner `tests/`). Die Skripte für Spiele, Fitnesspark und Wetter sind nur von Hand geprüft.

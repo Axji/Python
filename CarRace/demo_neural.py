@@ -23,10 +23,9 @@ os.chdir(HERE)
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
-import pygame
-
 import constant
 import neural_ai
+import pygame
 import track_map as tm
 from train_neural import ORANGE, PINK, SIGMAS, Race
 

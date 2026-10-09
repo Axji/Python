@@ -4,6 +4,7 @@ Steuerung: Pfeil links/rechts bewegt die Figur, die Leertaste springt. Wird die 
 losgelassen und erneut gedrückt, ist ein Doppelsprung möglich.
 """
 import sys
+
 import pygame
 
 # Pygame initialisieren

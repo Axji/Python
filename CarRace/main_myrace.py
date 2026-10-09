@@ -12,14 +12,13 @@ os.chdir(HERE)
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
-import pygame
-from pygame.locals import *
-
-import constant
-import car
 import ai
+import car
+import constant
 import neural_ai
+import pygame
 import track_map
+from pygame.locals import *
 
 pygame.init()
 

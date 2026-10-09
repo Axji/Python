@@ -9,9 +9,8 @@ Damit sind Fühler und Rennbewertung deutlich schneller als mit `Surface.get_at(
 import math
 from collections import deque
 
-import pygame
-
 import constant
+import pygame
 
 SENSOR_STEP = 4  # Schrittgrösse der Fühler in Pixeln
 

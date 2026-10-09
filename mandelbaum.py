@@ -1,8 +1,9 @@
 """Mandelbrot-Generator mit Fenster: zeichnet die Menge in Full-HD und lässt Ausschnitt und Detailgrad einstellen."""
-import numpy as np
-from PIL import Image, ImageTk
 import tkinter as tk
 from tkinter import ttk
+
+import numpy as np
+from PIL import Image, ImageTk
 
 # Bildauflösung: Full HD
 WIDTH = 1920

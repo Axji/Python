@@ -11,7 +11,6 @@ import csv
 import datetime as dt
 import os
 import sqlite3
-import time
 
 import requests
 
@@ -45,7 +44,7 @@ class FitnessParkScraper:
         if output_filename is None:
             self.output_filename = os.path.join(
                 fitnesspark_db.DATA_DIR,
-                "Fitnesspark_Belegung_%s.csv" % dt.datetime.now().strftime("%Y-%m-%d"),
+                f"Fitnesspark_Belegung_{dt.datetime.now().strftime('%Y-%m-%d')}.csv",
             )
         else:
             self.output_filename = output_filename
@@ -105,7 +104,7 @@ class FitnessParkScraper:
             print(f"Error: Data from {park['URL']} is not valid JSON.")
         except requests.exceptions.RequestException as e:
             print(f"Error fetching URL {park['URL']}: {e}")
-        except IOError as e:
+        except OSError as e:
             print(f"Error writing to file '{self.output_filename}': {e}")
         except Exception as e:
             print(f"An unexpected error occurred: {e}")

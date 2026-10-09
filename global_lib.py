@@ -1,10 +1,10 @@
 """Kleine Hilfsfunktionen (Ausgabe, Dateien, Listen, Datum), die von mehreren Skripten genutzt werden."""
+import datetime
 import os
 import time
-import datetime
 
 
-class GlobalLib():
+class GlobalLib:
     """Sammlung statischer Hilfsfunktionen. Es wird keine Instanz benötigt."""
 
     @staticmethod
@@ -37,7 +37,7 @@ class GlobalLib():
     @staticmethod
     def print_empty_lines(param):
         """Gibt `param` Leerzeilen aus."""
-        for i in range(0, param):
+        for _ in range(param):
                 print("")
 
     @staticmethod

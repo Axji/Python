@@ -62,3 +62,6 @@ data/
 
 # Gelernte KI-Netze (und ihre Sicherungen) bleiben nur lokal
 CarRace/brains/
+
+# Wetterdaten werden von GetWeatherData.py neu geladen
+Weather/daten/

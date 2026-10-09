@@ -1,0 +1,19 @@
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = ["venv", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+# E501: lange Beschreibungen in Docstrings sind gewollt. B905: zip() mit gleich langen Listen.
+ignore = ["E501", "B905"]
+
+[tool.ruff.lint.per-file-ignores]
+# Hier steht os.chdir/sys.path vor den Importen, damit Bilder und Module relativ zum Skript gefunden werden.
+"CarRace/*.py" = ["E402"]
+# pygame.locals wird bewusst mit * importiert (Tastenkonstanten wie K_UP).
+"CarRace/main_myrace.py" = ["F403", "F405"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

@@ -1,6 +1,7 @@
 """Demo-Skript: führt Bubblesort und Shakersort auf einer zufälligen, einer sortierten und einer umgekehrten Liste aus."""
 # from global_lib import *
-from sort import *
+from global_lib import GlobalLib
+from sort import Sorting
 
 # Testdaten: unsortiert, bereits sortiert und absteigend sortiert
 list_of_elements = [2, 4, 8, 7, 5, 1, 8, 6, 4, 9, 5, 1, 5, 6]

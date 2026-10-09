@@ -143,7 +143,7 @@ def parse_files():
     # Nur die Dateien vom neuesten Datum verarbeiten
     for file in file_list:
         if file.startswith(max_date.isoformat()):
-            with open(os.path.join(cfg_data_dir, file), 'r', encoding='utf-8', errors='replace') as actfile:
+            with open(os.path.join(cfg_data_dir, file), encoding='utf-8', errors='replace') as actfile:
                 file_content = actfile.read()
                 parse_content(file_content)
 

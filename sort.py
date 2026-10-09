@@ -1,7 +1,8 @@
 """Sortieralgorithmen (Bubble-, Shaker- und Quicksort) mit Zählern für Vergleiche und Vertauschungen."""
-from global_lib import *
+from global_lib import GlobalLib
 
-class Sorting():
+
+class Sorting:
     """Sortierverfahren als statische Methoden.
 
     Die Klassenvariablen zählen, wie viele Vergleiche (`tests`) und Vertauschungen bzw.

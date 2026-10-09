@@ -215,6 +215,17 @@ geblieben.
 **Entscheidung:** Kommentare, Docstrings und Ausgaben sind deutsch, mit Schweizer Schreibweise (`ss` statt `ß`).
 **Grund:** Die Commit-Meldung nennt keinen. Vermutlich soll der Code ohne Übersetzen lesbar sein (bitte bestätigen).
 
+### E5 – Tests, Ruff-Regeln und CI (2026-10-09)
+**Entscheidung:** Die Ruff-Regeln stehen in `pyproject.toml` (E, F, W, I, B, UP; ausgenommen sind lange Zeilen in
+Docstrings und `zip` ohne `strict`). `pytest` prüft `sort.py` und `global_lib.py`. Ein GitHub-Actions-Workflow führt Ruff,
+`compileall` und `pytest` bei jedem Push aus. Die Wetter-Rohdateien in `Weather/daten/` liegen nicht mehr im Repository.
+**Grund:** Die Bereinigung nach Ruff liess sich vorher nicht reproduzieren, weil die Regeln nirgends standen.
+`from global_lib import *` in `sort.py` und `run.py` ist durch ausdrückliche Importe ersetzt, damit Ruff die Namen prüfen
+kann. Die Wetterdateien lassen sich mit `GetWeatherData.py` jederzeit neu laden.
+**Alternative (verworfen):** Die Skripte im Root in Unterordner zu verschieben. Das ändert alle Pfade in der Dokumentation
+und bleibt offen.
+**Folge:** In `CarRace/` ist die Regel E402 abgeschaltet, weil dort `os.chdir` bewusst vor den Importen steht.
+
 ---
 
 ## Offene Punkte

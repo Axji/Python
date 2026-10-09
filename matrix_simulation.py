@@ -1,4 +1,4 @@
-"""Simulation einer 10x10-Matrix: Jede Zelle zählt in einem eigenen Thread und eigenen Tempo von 0 bis 9 hoch.
+"""Simulation einer 10x10-Matrix: Jede Zelle zählt in einem eigenen Thread und in eigenem Tempo von 0 bis 9 hoch.
 
 Das Fenster (tkinter) zeigt die Matrix, die Anzahl Aktualisierungen und die verstrichene Zeit. Start, Stop und Reset
 steuern die Simulation.

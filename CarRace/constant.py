@@ -33,7 +33,6 @@ CATCHUP_MIN_GAP = 40        # Rückstand in Pixeln, ab dem der Bonus beginnt
 CATCHUP_FULL_GAP = 300      # Rückstand in Pixeln, ab dem der volle Bonus gilt
 CATCHUP_DECAY_SECONDS = 1.5 # So lange sinkt der Bonus auf 0, wenn das Auto nicht mehr hinten liegt
 
-MAXANGLE = 4 / 8  # Maximaler Lenkwinkel (im Code aktuell nicht verwendet)
 
 # Startposition des Autos auf der Strecke
 STARTPOSX = 100.0

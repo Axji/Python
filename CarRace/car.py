@@ -160,13 +160,13 @@ class Car:
         """Nach links lenken."""
         self.steering(
             -1
-        )  # steering mit passender Seite aufrufen -1 / 1 verändert nur dir richtung
+        )  # steering mit passender Seite (-1 / 1) aufrufen, das ändert nur die Richtung
 
     def right(self):
         """Nach rechts lenken."""
         self.steering(
             1
-        )  # steering mit passnder Seite aufrufen -1 / 1 verändert nur dir richtung
+        )  # steering mit passender Seite (-1 / 1) aufrufen, das ändert nur die Richtung
 
     def steering(self, side):
         """Ändert die Drehgeschwindigkeit: side = -1 (links) oder 1 (rechts)."""
@@ -183,7 +183,7 @@ class Car:
         """Liefert das Autobild passend zur Fahrtrichtung gedreht."""
         return pygame.transform.rotate(
             self.carImage, self.view_angle * -1
-        )  # Rotate winkel ist umgekehrt zu dem wie er in Game benutzt wird.
+        )  # Der Drehwinkel ist umgekehrt zu dem im Spiel verwendeten.
 
     def setmalus(self, malusfactor):
         """Setzt den Malus-Faktor je nach Untergrund (1 = Strasse, kleiner = Abseits)."""

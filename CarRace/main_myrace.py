@@ -3,7 +3,6 @@
 Steuerung: Pfeiltasten (Gas, Bremse, Lenken), Enter wechselt die Strecke, Escape beendet das Spiel.
 Neben der Strasse wird das Auto langsamer. Die Strecken liegen als track_1.png, track_2.png, ... neben dem Skript.
 """
-# debugged: angle, explosion
 import os
 import sys
 

@@ -195,6 +195,9 @@ Parameter, Wert); ein erneuter Abruf überschreibt gleiche Werte.
 **Grund:** Die alten Textdateien unter `meteoschweiz.admin.ch/product/output/…` liefern 404. Die API ist die offizielle
 Schnittstelle, kennt alle Stationen und braucht keine fest eingetragene Stationsliste und kein Zerlegen von Textzeilen.
 Die Parameter unterscheiden sich je Station, darum passt das lange Format besser als eine Spalte pro Messgrösse.
+**Namen:** Die Kürzel der Messgrössen (`ths200m0` …) werden über `ParameterNames.py` in englische, sprechende Namen
+(`temp_2m_mean` …) umbenannt, in CSV-Datei und Datenbank. Die Bedeutung stammt aus `ogd-nbcn_meta_parameters.csv`; das
+Originalkürzel bleibt in `parameters.code` erhalten.
 **Folge:** Die alte Tabelle `weather` und die Textmarken in `config.ini` entfallen. Alte Abrufe bleiben nur als CSV-Datei
 erhalten, die Datenbank hält pro Wert den letzten Stand.
 

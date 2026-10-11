@@ -187,6 +187,17 @@ Zeitlimit von 30 Sekunden, und nur Dateinamen im Muster `JJJJ-MM-TT_…txt` zäh
 **Grund:** `str(bytes)` erzeugte `b'…'`-Text mit zerstörten Umlauten, die Datei wurde nie geschlossen, und eine fremde
 Datei im Datenordner liess `parse_files()` abstürzen.
 
+### D6 – Wetterdaten über die STAC-API statt `homog_mo_XXX.txt` (2026-10-11)
+**Entscheidung:** `GetWeatherData.py` fragt die STAC-API von data.geo.admin.ch ab (Datensätze `ogd-nbcn` und
+`ogd-nbcn-precip`) und lädt die Monatsdatei (`_m.csv`) aller 75 Stationen. Das Ergebnis wird als CSV-Datei mit
+Abrufzeitpunkt im Namen und in SQLite gespeichert. Die Datenbank hält die Werte im langen Format (Station, Monat,
+Parameter, Wert); ein erneuter Abruf überschreibt gleiche Werte.
+**Grund:** Die alten Textdateien unter `meteoschweiz.admin.ch/product/output/…` liefern 404. Die API ist die offizielle
+Schnittstelle, kennt alle Stationen und braucht keine fest eingetragene Stationsliste und kein Zerlegen von Textzeilen.
+Die Parameter unterscheiden sich je Station, darum passt das lange Format besser als eine Spalte pro Messgrösse.
+**Folge:** Die alte Tabelle `weather` und die Textmarken in `config.ini` entfallen. Alte Abrufe bleiben nur als CSV-Datei
+erhalten, die Datenbank hält pro Wert den letzten Stand.
+
 ---
 
 ## E. Werkzeuge und Arbeitsweise
@@ -236,8 +247,6 @@ und bleibt offen.
 | Backup mit altem Passwort | `C:\dev\Phyton_backup_vor_historie.git` löschen, sobald nichts mehr gebraucht wird | Besitzer |
 | Python 3.14 | Entscheiden, ob umgestellt wird. Der Versuch, es parallel zu installieren, schlug mit Fehler 1638 („andere Version bereits installiert") fehl. Vorher prüfen, ob alle Pakete (besonders `pygame` und `pymssql`) Wheels für 3.14 haben | Besitzer |
 | Sihlcity-ID | Bestätigen, dass `704` (URL) richtig ist und nicht `784` | Besitzer |
-| Wetterdaten | `parse_content` schreibt noch nichts in die Datenbank | Besitzer |
-| MeteoSchweiz-Adresse | `http://…` in `config.ini` prüfen (Weiterleitung, `https`) | Besitzer |
 | Lokaler Branch | `cleanup/review-fixes` ist gemergt und auf GitHub gelöscht, lokal noch vorhanden | Besitzer |
 | `pymssql` | Steht in `requirements.txt`, wird aber nur von `AzureMsSql.py` genutzt, das nirgends aufgerufen wird. Entfernen oder nutzen | Besitzer |
 | pygame | `pygame` 2.6.1 ist von 2024. `pygame-ce` ist der aktiv gepflegte Fork mit gleichem `import pygame`, nicht geprüft | Besitzer |

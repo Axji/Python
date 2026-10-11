@@ -194,7 +194,7 @@ def build_data(data_dir):
         'range': [days[0].isoformat(), days[-1].isoformat()],
         'gaps': [[a.isoformat(), b.isoformat()] for a, b in find_gaps(days)],
         'days': len(days),
-        'created': dt.datetime.now().strftime('%d.%m.%Y %H:%M'),
+        'created': dt.datetime.now().isoformat(sep=' ', timespec='minutes'),
     }
 
 

@@ -46,7 +46,8 @@ Erweiterungen: Python, Pylance, Ruff, Jupyter.
 
 ```bash
 .envScriptspython.exe -m pip install ruff pytest
-.envScriptsuff.exe check .
+.envScripts
+uff.exe check .
 .envScriptspython.exe -m pytest
 ```
 
@@ -201,23 +202,27 @@ verwendet. Der Ordner `brains/` gehört nicht ins Repository.
 
 ## 5. Wetterdaten (Weather)
 
-Lädt monatliche Klimadaten von MeteoSchweiz.
+Lädt die homogenen Monatsdaten aller MeteoSchweiz-Stationen (29 Klimastationen und 46 Niederschlagsstationen) über die
+STAC-API von data.geo.admin.ch.
 
 ```bash
-.\venv\Scripts\python.exe Weather\Init\Config_Generator.py   # einmalig: config.ini erzeugen (überschreibt nie)
-.\venv\Scripts\python.exe Weather\Init\PrepareDB.py          # SQLite-Datenbank und Tabelle anlegen
-.\venv\Scripts\python.exe Weather\GetWeatherData.py          # Dateien auswerten
+.env\Scripts\python.exe Weather\Init\Config_Generator.py   # einmalig: config.ini erzeugen (überschreibt nie)
+.env\Scripts\python.exe Weather\GetWeatherData.py          # alle Stationen laden, CSV-Datei und Datenbank schreiben
 ```
 
-- `GetWeatherData.py`: `get_files_from_web()` lädt je Station eine Textdatei nach `Weather/daten/` (liegt nur lokal und steht in `.gitignore`; Dateiname
-  `JJJJ-MM-TT_Station.txt`, Pause zwischen den Downloads, Zeitlimit 30 Sekunden). `parse_files()` liest die Dateien des
-  neuesten Datums. Beim Start ist der Download-Aufruf auskommentiert.
-- `SqlLiteWD.py`: Klasse zum Schreiben in die SQLite-Tabelle `weather`, auch als `with`-Block nutzbar.
+- `GetWeatherData.py`: fragt die API je Datensatz ab, lädt die Monatsdatei jeder Station (Pause zwischen den Downloads,
+  Zeitlimit 30 Sekunden) und speichert das Ergebnis im Ordner `Weather/daten/` (liegt nur lokal und steht in `.gitignore`):
+  - `homogene_monatsdaten_JJJJMMTT_HHMMSS.csv`: alle Stationen in einer Datei, der Abrufzeitpunkt steht im Namen. Jeder
+    Abruf erzeugt eine neue Datei, alte bleiben erhalten.
+  - `weather.db` (SQLite): Tabelle `homogeneous_monthly` (Station, Monatserster, Parameter, Wert, Abrufzeitpunkt), dazu
+    `stations` und `parameters` mit den Beschreibungen. Ein erneuter Abruf überschreibt gleiche Werte und setzt den
+    Abrufzeitpunkt neu. Die Tabellen werden bei Bedarf angelegt.
+  - Schlägt der Download einer Station fehl, werden die übrigen trotzdem gespeichert; das Skript nennt die fehlenden
+    Stationen und endet mit Exit-Code 1. Ein Abruf dauert rund zwei Minuten.
+- `Init/PrepareDB.py`: legt nur die Datenbank und die Tabellen an, ohne Abruf.
+- `SqlLiteWD.py`: Klasse zum Schreiben in die SQLite-Datenbank, auch als `with`-Block nutzbar.
 - `AzureMsSql.py`: Verbindung zu Azure SQL über Umgebungsvariablen (siehe Abschnitt 7).
-- `config.ini`: Adressen, Datenordner und Textmarken für die Auswertung.
-
-**Stand:** Das Auswerten der Dateien (`parse_content`) schreibt noch nichts in die Datenbank. Der Teil ist vorbereitet,
-aber nicht umgesetzt.
+- `config.ini`: Adresse der API, Datensätze, Dateiendung der Monatsdateien (`_m.csv`), Datenordner und Pause.
 
 ---
 

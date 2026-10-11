@@ -12,16 +12,14 @@ config = configparser.ConfigParser()
 # Schlüssel entsprechen denen, die Weather/GetWeatherData.py liest.
 config['DEFAULT'] = {
     # Pause in Sekunden zwischen zwei Downloads, um den Server zu schonen
-    'sleepTimeBetweenFiles': '1',
-    # Download-Adresse; XXX wird je Station durch deren Kürzel ersetzt
-    'baseUrl': 'http://www.meteoschweiz.admin.ch/product/output/climate-data/'
-               'homogenous-monthly-data-processing/data/homog_mo_XXX.txt',
-    'stringToReplaceInUrl': 'XXX',
-    'dataDir': 'daten',  # Ordner für die heruntergeladenen Dateien
-    'Station': 'Station:',  # Textmarke der Zeile mit dem Stationsnamen
-    # Kopfzeile direkt vor den Messwerten und ihre Länge (Anzahl Zeichen, um die Daten zu überspringen)
-    'LineBeforeData': 'Year  Month        Temperature      Precipitation',
-    'LineBeforeDataLen': '52',
+    'sleepTimeBetweenFiles': '0.5',
+    # STAC-API von swisstopo/geo.admin.ch, über die MeteoSchweiz ihre Open-Government-Daten bereitstellt
+    'apiUrl': 'https://data.geo.admin.ch/api/stac/v1',
+    # Datensätze mit homogenen Messreihen: Klimastationen und Niederschlagsstationen
+    'collections': 'ch.meteoschweiz.ogd-nbcn, ch.meteoschweiz.ogd-nbcn-precip',
+    # Endung der Datei mit den Monatswerten (_d = Tag, _y = Jahr)
+    'assetSuffix': '_m.csv',
+    'dataDir': 'daten',  # Ordner für die heruntergeladenen Dateien und die Datenbank
 }
 config['global'] = {}
 config['global']['Author'] = 'Axel "Axji" Zenklusen'

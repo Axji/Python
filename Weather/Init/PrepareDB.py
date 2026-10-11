@@ -1,25 +1,14 @@
-"""Legt die SQLite-Datenbank und die Tabelle `weather` für die Wetterdaten an (gefahrlos mehrfach ausführbar)."""
+"""Legt die SQLite-Datenbank und ihre Tabellen für die Wetterdaten an (gefahrlos mehrfach ausführbar).
+
+GetWeatherData.py legt die Tabellen bei Bedarf selbst an; dieses Skript ist nur für das Vorbereiten ohne Abruf.
+"""
 import os
-import sqlite3
+import sys
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'daten', 'weather.db')
+# Das Skript liegt in Init/, die Datenbankklasse eine Ebene höher
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
-# Datenordner anlegen, falls er noch fehlt
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-conn = sqlite3.connect(DB_PATH)
+from SqlLiteWD import SqlLiteWD  # noqa: E402  (erst nach dem Anpassen von sys.path möglich)
 
-c = conn.cursor()
-
-# Tabelle anlegen (bestehende Daten bleiben erhalten)
-c.execute('''CREATE TABLE IF NOT EXISTS weather
-            (Station text,
-            year integer,
-            month integer,
-            temperature real,
-            rain real,
-            createUser text,
-            createTime datetime,
-            updateUser text,
-            updateTime datetime)''')
-conn.commit()
-conn.close()
+with SqlLiteWD() as db:
+    print("Datenbank bereit: " + db.db_path)

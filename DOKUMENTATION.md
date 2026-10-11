@@ -215,10 +215,18 @@ STAC-API von data.geo.admin.ch.
   - `homogene_monatsdaten_JJJJMMTT_HHMMSS.csv`: alle Stationen in einer Datei, der Abrufzeitpunkt steht im Namen. Jeder
     Abruf erzeugt eine neue Datei, alte bleiben erhalten.
   - `weather.db` (SQLite): Tabelle `homogeneous_monthly` (Station, Monatserster, Parameter, Wert, Abrufzeitpunkt), dazu
-    `stations` und `parameters` mit den Beschreibungen. Ein erneuter Abruf überschreibt gleiche Werte und setzt den
+    `stations` und `parameters` mit den Beschreibungen (Name, Originalkürzel, Einheit). Ein erneuter Abruf überschreibt gleiche Werte und setzt den
     Abrufzeitpunkt neu. Die Tabellen werden bei Bedarf angelegt.
   - Schlägt der Download einer Station fehl, werden die übrigen trotzdem gespeichert; das Skript nennt die fehlenden
     Stationen und endet mit Exit-Code 1. Ein Abruf dauert rund zwei Minuten.
+- `ParameterNames.py`: ordnet den Kürzeln von MeteoSchweiz (z. B. `ths200m0`) sprechende Namen zu (`temp_2m_mean`). Die
+  Namen gelten in CSV-Datei und Datenbank; das Originalkürzel steht in `parameters.code`. Unbekannte Kürzel bleiben
+  unverändert.
+- `temperatur_report.py`: erzeugt aus der Datenbank die interaktive Seite `Weather/daten/temperatur_auswertung.html` mit
+  `temp_2m_mean` für eine wählbare Station: Jahresmittel als Abweichung von der Referenzperiode (1961–1990 oder
+  1991–2020) mit Trend, Warming Stripes, Monatsmittel im Vergleich, Erwärmung je Monat und ein Vergleich aller Stationen.
+  Es zählen nur Jahre mit zwölf Monatswerten. Die Seite lädt Plotly aus dem Internet. Aufruf:
+  `py Weather	emperatur_report.py --open` (nach `GetWeatherData.py`).
 - `Init/PrepareDB.py`: legt nur die Datenbank und die Tabellen an, ohne Abruf.
 - `SqlLiteWD.py`: Klasse zum Schreiben in die SQLite-Datenbank, auch als `with`-Block nutzbar.
 - `AzureMsSql.py`: Verbindung zu Azure SQL über Umgebungsvariablen (siehe Abschnitt 7).

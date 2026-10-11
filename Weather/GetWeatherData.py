@@ -16,6 +16,7 @@ import sys
 import time
 import urllib.request
 
+from ParameterNames import parameter_name
 from SqlLiteWD import SqlLiteWD
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -114,9 +115,9 @@ def load_all():
                 s['station_abbr'], s['station_name'], s['station_canton'], to_float(s['station_height_masl']),
                 to_float(s['station_coordinates_wgs84_lat']), to_float(s['station_coordinates_wgs84_lon']), collection)
         for p in meta_parameters:
-            parameters[p['parameter_shortname']] = (
-                p['parameter_shortname'], p['parameter_description_de'], p['parameter_description_en'],
-                p['parameter_unit'])
+            parameters[parameter_name(p['parameter_shortname'])] = (
+                parameter_name(p['parameter_shortname']), p['parameter_shortname'], p['parameter_description_de'],
+                p['parameter_description_en'], p['parameter_unit'])
 
         for station, href in list_monthly_files(collection):
             print(f"  {station}: {href}")
@@ -127,6 +128,7 @@ def load_all():
                 failed.append(station)
                 continue
             for row in station_rows:
+                row = {parameter_name(key): text for key, text in row.items()}  # Kürzel durch sprechende Namen ersetzen
                 rows.append(row)
                 # Datum immer als ISO speichern (die Quelle liefert TT.MM.JJJJ HH:MM)
                 month = row['reference_timestamp'] = month_start(row['reference_timestamp'])
@@ -143,6 +145,10 @@ def load_all():
     if not rows:
         print("Keine Daten geladen, nichts gespeichert.")
         return len(failed) or 1
+
+    # Nur Parameter beschreiben, zu denen es Messwerte gibt (die Metadaten enthalten auch Tages- und Jahreswerte)
+    used = {parameter for _, _, parameter, _ in values}
+    parameters = {name: p for name, p in parameters.items() if name in used}
 
     target = write_combined_csv(rows, fieldnames, retrieved_at)
     print(f"Datei gespeichert: {target} ({len(rows)} Zeilen)")

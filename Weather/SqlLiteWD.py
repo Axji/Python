@@ -11,7 +11,7 @@ SCHEMA = '''
 CREATE TABLE IF NOT EXISTS homogeneous_monthly (
     station_abbr text NOT NULL,
     month_start text NOT NULL,      -- JJJJ-MM-TT, immer der Monatserste
-    parameter text NOT NULL,        -- Kürzel, siehe Tabelle parameters
+    parameter text NOT NULL,        -- sprechender Name, siehe Tabelle parameters
     value real NOT NULL,
     retrieved_at text NOT NULL,     -- Zeitpunkt des Abrufs, ISO 8601 (JJJJ-MM-TTTHH:MM:SS)
     PRIMARY KEY (station_abbr, month_start, parameter)
@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS stations (
     retrieved_at text
 );
 CREATE TABLE IF NOT EXISTS parameters (
-    parameter text PRIMARY KEY,
+    parameter text PRIMARY KEY,     -- sprechender Name, siehe ParameterNames.py
+    code text,                      -- Originalkürzel von MeteoSchweiz
     description_de text,
     description_en text,
     unit text,
@@ -74,9 +75,9 @@ class SqlLiteWD:
         conn.commit()
 
     def save_parameters(self, parameters, retrieved_at):
-        """Speichert Parameterbeschreibungen als Liste von (Kürzel, Beschreibung de, Beschreibung en, Einheit)."""
+        """Speichert Parameterbeschreibungen als Liste von (Name, Originalkürzel, Beschreibung de, Beschreibung en, Einheit)."""
         conn = self.con_open()
-        conn.executemany("INSERT OR REPLACE INTO parameters VALUES (?,?,?,?,?)",
+        conn.executemany("INSERT OR REPLACE INTO parameters VALUES (?,?,?,?,?,?)",
                          [tuple(p) + (retrieved_at,) for p in parameters])
         conn.commit()
 

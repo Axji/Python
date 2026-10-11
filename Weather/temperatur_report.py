@@ -279,19 +279,19 @@ function render() {
 }
 
 document.getElementById('retrieved').textContent = 'Abruf ' + (DATA.retrievedAt || '').replace('T', ' ');
-// Referenzperioden in 30-Jahres-Schritten (…, 1931–1960, 1961–1990, 1991–2020); angeboten werden nur Perioden,
+// Referenzperioden in 30-Jahres-Schritten (1871–1900 bis 1991–2020); angeboten werden nur Perioden,
 // in denen mindestens eine Station 20 volle Jahre hat
 const allAnnual = DATA.stations.map(annual);
 const baseSel = document.getElementById('baseline');
-for (let start = 1991; start >= 1700; start -= 30) {
+for (let start = 1991; start >= 1871; start -= 30) {
   if (allAnnual.some(a => periodMean(a, start, start + 29) !== null)) {
     baseSel.add(new Option(start + '–' + (start + 29), start + '-' + (start + 29)));
   }
 }
-baseSel.value = '1961-1990';
+baseSel.value = '1991-2020';
 const sel = document.getElementById('station');
 sel.innerHTML = DATA.stations.map(s => `<option value="${s.abbr}">${s.name} (${s.abbr})</option>`).join('');
-sel.value = (DATA.stations.find(s => s.abbr === 'SMA') || DATA.stations[0]).abbr;
+sel.value = (DATA.stations.find(s => s.abbr === 'SIO') || DATA.stations[0]).abbr;
 ['station', 'baseline', 'range'].forEach(id => document.getElementById(id).addEventListener('change', render));
 render();
 </script>

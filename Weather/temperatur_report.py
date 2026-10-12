@@ -42,7 +42,8 @@ def build_data(db_path):
                 "SELECT station_abbr, month_start, value FROM homogeneous_monthly WHERE parameter = ? ORDER BY 1, 2",
                 (PARAMETER,)):
             values.setdefault(abbr, {})[(int(month[:4]), int(month[5:7]))] = value
-        retrieved_at = conn.execute("SELECT max(retrieved_at) FROM homogeneous_monthly").fetchone()[0]
+        row = conn.execute("SELECT value FROM meta WHERE key = 'monthly_retrieved_at'").fetchone()
+        retrieved_at = row[0] if row else None
     finally:
         conn.close()
 

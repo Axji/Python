@@ -214,9 +214,11 @@ STAC-API von data.geo.admin.ch.
   Zeitlimit 30 Sekunden) und speichert das Ergebnis im Ordner `Weather/daten/` (liegt nur lokal und steht in `.gitignore`):
   - `homogene_monatsdaten_JJJJMMTT_HHMMSS.csv`: alle Stationen in einer Datei, der Abrufzeitpunkt steht im Namen. Jeder
     Abruf erzeugt eine neue Datei, alte bleiben erhalten.
-  - `weather.db` (SQLite): Tabelle `homogeneous_monthly` (Station, Monatserster, Parameter, Wert, Abrufzeitpunkt), dazu
-    `stations` und `parameters` mit den Beschreibungen (Name, Originalkürzel, Einheit). Ein erneuter Abruf überschreibt gleiche Werte und setzt den
-    Abrufzeitpunkt neu. Die Tabellen werden bei Bedarf angelegt.
+  - `weather.db` (SQLite): Tabelle `homogeneous_monthly` (Station, Monatserster, Parameter, Wert), dazu
+    `stations` und `parameters` mit den Beschreibungen (Name, Originalkürzel, Einheit). Ein erneuter Abruf überschreibt gleiche
+    Werte. Der Abrufzeitpunkt steht einmal in der Tabelle `meta` (Schlüssel `monthly_retrieved_at`). Die Tabellen werden bei
+    Bedarf angelegt; eine ältere Datenbank mit `retrieved_at` in jeder Zeile wird beim nächsten Öffnen automatisch umgebaut.
+    `homogeneous_monthly` ist `WITHOUT ROWID`, die Datenbank ist so nur noch etwa 45 statt 117 MB gross.
   - Schlägt der Download einer Station fehl, werden die übrigen trotzdem gespeichert; das Skript nennt die fehlenden
     Stationen und endet mit Exit-Code 1. Ein Abruf dauert rund zwei Minuten.
 - `ParameterNames.py`: ordnet den Kürzeln von MeteoSchweiz (z. B. `ths200m0`) sprechende Namen zu (`temp_2m_mean`). Die

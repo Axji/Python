@@ -117,7 +117,7 @@ class Game:
         self.bullets = [b for b in self.bullets if b.alive]
         self.enemies = [e for e in self.enemies if e.alive and e.rect.top < self.level.height + 64]
 
-        if self.player.rect.colliderect(self.level.flag_rect):
+        if self.player.rect.colliderect(self.level.goal_rect):
             self.state = WON
         if self.player.rect.top > self.level.height + 32:
             self.lose_life(respawn=True)

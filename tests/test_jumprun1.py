@@ -139,3 +139,96 @@ def test_sprite_rows_have_equal_width():
 def test_from_ascii_rejects_ragged_rows():
     with pytest.raises(ValueError):
         from_ascii(["..", "..."])
+
+
+def test_standing_player_stays_on_ground_without_flicker():
+    level = Level()
+    player = settled_player(level)
+    for _ in range(60):
+        player.update(level, False, False, False)
+        assert player.on_ground
+        assert player.sprite_state == "idle"
+
+
+def test_running_player_never_shows_jump_frame_on_ground():
+    level = Level()
+    player = settled_player(level)
+    for _ in range(40):
+        player.update(level, False, True, False)
+        assert player.sprite_state in ("run1", "run2", "idle")
+
+
+def press_jump_in_air(player, level, frames_before):
+    """Lässt die Figur `frames_before` Bilder fliegen und drückt dann Sprung."""
+    for _ in range(frames_before):
+        player.update(level, False, False, True)
+    player.request_jump()
+    player.update(level, False, False, True)
+
+
+def test_double_jump_gives_second_boost_in_the_air():
+    level = Level()
+    player = settled_player(level)
+    player.request_jump()
+    player.update(level, False, False, True)
+    assert player.vel.y < 0
+    for _ in range(25):  # höchster Punkt ist überschritten, die Figur fällt
+        player.update(level, False, False, True)
+    assert player.vel.y > 0
+    falling = player.vel.y
+    press_jump_in_air(player, level, 0)
+    assert player.vel.y < falling  # zweiter Sprung hat sie wieder nach oben geschoben
+    assert player.jumps_used == 2
+
+
+def test_no_third_jump_before_landing():
+    level = Level()
+    player = settled_player(level)
+    for _ in range(2):  # zwei Sprünge hintereinander
+        player.request_jump()
+        player.update(level, False, False, True)
+        for _ in range(8):
+            player.update(level, False, False, True)
+    assert player.jumps_used == 2
+    assert not player.on_ground
+    player.vel.y = 3.0  # fällt
+    player.request_jump()
+    player.update(level, False, False, True)
+    assert player.vel.y > 3.0  # kein dritter Sprung, nur Schwerkraft
+
+
+def test_landing_restores_both_jumps():
+    level = Level()
+    player = settled_player(level)
+    player.jumps_used = 2
+    player.update(level, False, False, False)  # steht auf dem Boden
+    assert player.on_ground
+    player.update(level, False, False, False)
+    assert player.jumps_used == 0
+
+
+def test_falling_off_a_ledge_leaves_only_one_air_jump():
+    level = Level()
+    player = settled_player(level)
+    player.pos.y -= 60  # in der Luft, als wäre sie von einer Kante gefallen (ohne zu springen)
+    player.rect.y = round(player.pos.y)
+    player.on_ground = False
+    player.coyote = 0
+    player.jumps_used = 0
+    player.vel.y = 1.0
+    player.update(level, False, False, True)
+    assert player.jumps_used == 1  # der Sprung vom Boden ist verfallen
+    player.request_jump()
+    player.update(level, False, False, True)
+    assert player.jumps_used == 2  # ein Luftsprung ist noch möglich
+    player.vel.y = 3.0
+    player.request_jump()
+    player.update(level, False, False, True)
+    assert player.vel.y > 3.0  # weiter geht es nicht
+
+
+def test_goal_zone_reaches_above_the_flag():
+    level = Level()
+    assert level.goal_rect.top < level.flag_rect.top  # man kann das Ziel nicht überspringen
+    assert level.goal_rect.bottom >= level.flag_rect.bottom
+    assert level.goal_rect.x == level.flag_rect.x

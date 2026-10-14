@@ -72,6 +72,7 @@ class Level:
         self.enemy_starts = []
         self.coins = []
         self.flag_rect = pygame.Rect(0, 0, 0, 0)
+        self.goal_rect = pygame.Rect(0, 0, 0, 0)  # Zielzone: wie die Fahne, aber bis zum oberen Rand, damit man sie nicht überspringt
         self._find_objects()
 
     def _find_objects(self):
@@ -86,6 +87,7 @@ class Level:
                     self.coins.append(pygame.Rect(x + 4, y + 4, 8, 8))
                 elif char == "F":
                     self.flag_rect = pygame.Rect(x, y - 2 * TILE, TILE, 3 * TILE)  # 3 Kacheln hoch, unten auf dem Boden
+                    self.goal_rect = pygame.Rect(x, -10 * TILE, TILE, 10 * TILE + y + TILE)
                 if char in "PECF":
                     self.grid[row][col] = "."  # Objekte sind keine Kacheln
 

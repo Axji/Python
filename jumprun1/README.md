@@ -17,14 +17,14 @@ Voraussetzung: `pip install -r requirements.txt` (pygame).
 | Taste | Aktion |
 |---|---|
 | Pfeil links/rechts oder A/D | laufen |
-| Leertaste, Pfeil hoch oder W | springen (länger gedrückt = höher) |
+| Leertaste, Pfeil hoch oder W | springen (länger gedrückt = höher). **Doppelsprung:** in der Luft noch einmal drücken, danach erst landen |
 | X, J oder Strg | **geradeaus nach vorne schiessen** (gedrückt halten = Dauerfeuer) |
 | R | nach Spielende neu starten |
 | Esc | beenden |
 
 ## Spielregeln
 
-- Ziel ist die Fahne am Ende des Plans.
+- Ziel ist die Fahne am Ende des Plans (die Zielzone reicht bis zum oberen Rand, man kann sie nicht überspringen).
 - Münzen geben 10 Punkte. Gegner lassen sich abschiessen (100 Punkte) oder von oben anspringen (200 Punkte).
 - Ein Treffer von der Seite oder ein Sturz in ein Loch kostet ein Leben (3 Leben). Nach einem Treffer ist die Figur kurz geschützt.
 

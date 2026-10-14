@@ -5,6 +5,7 @@ import pygame
 
 from .constants import (
     AIR_CONTROL,
+    AIR_JUMP_SPEED,
     BULLET_LIFETIME,
     BULLET_SPEED,
     COYOTE_FRAMES,
@@ -17,6 +18,7 @@ from .constants import (
     JUMP_SPEED,
     MAX_BULLETS,
     MAX_FALL,
+    MAX_JUMPS,
     RUN_ACCEL,
     RUN_MAX,
     SHOOT_COOLDOWN,
@@ -64,6 +66,16 @@ def move_body(body, level):
             body.pos.y = body.rect.y
             body.vel.y = 0
 
+    # Steht der Körper schon auf dem Boden? Die Schwerkraft schiebt ihn pro Bild nur um Bruchteile eines Pixels, das
+    # rundet wieder auf die alte Lage, und es gäbe keinen Zusammenstoss. Ohne diese Prüfung würde der Körper jedes zweite
+    # Bild als "in der Luft" gelten (die Beine der Figur flackerten).
+    if not result.on_ground and body.vel.y >= 0:
+        feet = body.rect.move(0, 1)
+        if any(feet.colliderect(tile) for tile in level.solid_rects_near(feet)):
+            result.on_ground = True
+            body.pos.y = body.rect.y
+            body.vel.y = 0
+
     return result
 
 
@@ -89,7 +101,8 @@ class Bullet:
 
 
 class Player:
-    """Die Spielfigur: läuft, springt (je länger die Taste, desto höher) und schiesst geradeaus nach vorne."""
+    """Die Spielfigur: läuft, springt (je länger die Taste, desto höher), kann einmal in der Luft nachspringen
+    (Doppelsprung) und schiesst geradeaus nach vorne. Nach dem zweiten Sprung muss sie erst landen."""
 
     WIDTH, HEIGHT = 12, 16
     GUN_HEIGHT = 6  # Abstand des Laufs von der Oberkante der Figur
@@ -102,6 +115,7 @@ class Player:
         self.on_ground = False
         self.coyote = 0          # Restzeit, in der nach dem Verlassen einer Kante noch gesprungen werden darf
         self.jump_buffer = 0     # Restzeit, in der ein früh gedrückter Sprung noch gilt
+        self.jumps_used = 0      # Sprünge seit der letzten Landung (der Absprung vom Boden zählt als erster)
         self.shoot_cooldown = 0
         self.invulnerable = 0    # Restzeit der Schutzphase nach einem Treffer
         self.anim = 0
@@ -144,10 +158,18 @@ class Player:
         self.vel.x = max(-RUN_MAX, min(RUN_MAX, self.vel.x))
 
         # Springen: kurz nach der Kante (coyote) und kurz vor der Landung (buffer) wird verziehen
-        self.coyote = COYOTE_FRAMES if self.on_ground else max(0, self.coyote - 1)
+        if self.on_ground:
+            self.coyote = COYOTE_FRAMES
+            self.jumps_used = 0  # gelandet: beide Sprünge sind wieder frei
+        else:
+            self.coyote = max(0, self.coyote - 1)
+            if self.coyote == 0 and self.jumps_used == 0:
+                self.jumps_used = 1  # von einer Kante gefallen: der Sprung vom Boden ist verfallen, einer bleibt
         self.jump_buffer = max(0, self.jump_buffer - 1)
-        if self.jump_buffer and self.coyote:
-            self.vel.y = -JUMP_SPEED
+        if self.jump_buffer and (self.coyote or self.jumps_used < MAX_JUMPS):
+            from_ground = bool(self.coyote)
+            self.vel.y = -(JUMP_SPEED if from_ground else AIR_JUMP_SPEED)
+            self.jumps_used = 1 if from_ground else self.jumps_used + 1
             self.jump_buffer = self.coyote = 0
         if not jump_held and self.vel.y < -JUMP_RELEASE_SPEED:
             self.vel.y = -JUMP_RELEASE_SPEED  # Taste losgelassen: kurzer Sprung

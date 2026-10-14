@@ -25,11 +25,11 @@ class Sorting:
         print("Permutation done = " + str(Sorting.moves))
 
     @staticmethod
-    def bubble_sort(list_of_elements):
+    def bubble_sort(list_of_elements, verbose=False):
         """Bubblesort: vergleicht benachbarte Elemente und tauscht sie bei falscher Reihenfolge.
 
         Wiederholt die Durchläufe, bis nichts mehr getauscht wird. Laufzeit im schlechtesten Fall O(n²).
-        Sortiert die übergebene Liste direkt und gibt sie zurück.
+        Sortiert die übergebene Liste direkt und gibt sie zurück. Mit `verbose=True` wird jeder Tausch ausgegeben.
         """
         Sorting.tests = 0
         Sorting.moves = 0
@@ -41,15 +41,15 @@ class Sorting:
                 if list_of_elements[element] > list_of_elements[element + 1]:
                     Sorting.moves += 1
                     swapped = True  # Zwei Elemente in falscher Reihenfolge gefunden
-                    GlobalLib.change_positions(list_of_elements, element, element+1)
+                    GlobalLib.change_positions(list_of_elements, element, element+1, verbose)
         return list_of_elements
 
     @staticmethod
-    def shaker_sort(list_of_elements):
+    def shaker_sort(list_of_elements, verbose=False):
         """Shakersort (Cocktailsort): Bubblesort, der abwechselnd vorwärts und rückwärts durch die Liste läuft.
 
         Kleine Elemente am Listenende wandern dadurch schneller nach vorne. Laufzeit im schlechtesten Fall O(n²).
-        Sortiert die übergebene Liste direkt und gibt sie zurück.
+        Sortiert die übergebene Liste direkt und gibt sie zurück. Mit `verbose=True` wird jeder Tausch ausgegeben.
         """
         Sorting.tests = 0
         Sorting.moves = 0
@@ -63,17 +63,19 @@ class Sorting:
                     if list_of_elements[element] > list_of_elements[element + 1]:
                         Sorting.moves += 1
                         swapped = True  # Zwei Elemente in falscher Reihenfolge gefunden
-                        GlobalLib.change_positions(list_of_elements, element, element+1)
+                        GlobalLib.change_positions(list_of_elements, element, element+1, verbose)
                 if not swapped:
                     return list_of_elements
 
     @staticmethod
-    def quick_sort(arr):
+    def quick_sort(arr, verbose=False):
         """Quicksort: teilt die Liste um ein Pivot-Element in kleinere, gleiche und grössere Werte und sortiert die Teile rekursiv.
 
         Im Gegensatz zu den anderen Verfahren wird die Liste nicht verändert, sondern eine neue sortierte Liste
         zurückgegeben. Die Zähler werden nicht zurückgesetzt, dafür `reset_counters()` aufrufen.
         Laufzeit im Mittel O(n log n), im schlechtesten Fall O(n²).
+        Quicksort tauscht hier nicht, sondern verteilt die Werte auf drei Listen. Mit `verbose=True` wird jede Verteilung
+        ausgegeben (Wert, Pivot und Ziel-Liste).
         """
         less = []        # Werte kleiner als das Pivot-Element
         pivot_list = []  # Werte, die dem Pivot-Element entsprechen
@@ -89,11 +91,16 @@ class Sorting:
                 Sorting.moves += 1
                 if i < pivot:
                     less.append(i)
+                    target = "kleiner"
                 elif i > pivot:
                     more.append(i)
+                    target = "grösser"
                 else:
                     pivot_list.append(i)
+                    target = "gleich"
+                if verbose:
+                    print(f"Verschiebe {i} nach '{target}' (Pivot {pivot})")
             # Die beiden Teillisten rekursiv sortieren und zusammensetzen
-            less = Sorting.quick_sort(less)
-            more = Sorting.quick_sort(more)
+            less = Sorting.quick_sort(less, verbose)
+            more = Sorting.quick_sort(more, verbose)
             return less + pivot_list + more

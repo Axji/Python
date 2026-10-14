@@ -44,3 +44,30 @@ def test_counters_are_reset_and_counted():
 def test_sorted_list_needs_no_moves():
     Sorting.bubble_sort([1, 2, 3])
     assert Sorting.moves == 0
+
+
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort])
+def test_verbose_prints_every_swap(algorithm, capsys):
+    data = [3, 1, 2]
+    algorithm(data, verbose=True)
+    lines = capsys.readouterr().out.strip().splitlines()
+    assert len(lines) == Sorting.moves == 2  # genau ein Ausdruck je Tausch
+    assert all(line.startswith("Tausche Position") for line in lines)
+    assert lines[-1].endswith("[1, 2, 3]")
+
+
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort])
+def test_not_verbose_prints_nothing(algorithm, capsys):
+    algorithm([3, 1, 2])
+    assert capsys.readouterr().out == ""
+
+
+def test_verbose_quick_sort_prints_each_distribution(capsys):
+    assert Sorting.quick_sort([3, 1, 2], verbose=True) == [1, 2, 3]
+    out = capsys.readouterr().out
+    assert "Verschiebe 1 nach 'kleiner' (Pivot 3)" in out
+    assert "Verschiebe 3 nach 'gleich' (Pivot 3)" in out
+
+
+def test_verbose_gives_same_result_as_silent(capsys):
+    assert Sorting.bubble_sort([5, 2, 9, 1], verbose=True) == Sorting.bubble_sort([5, 2, 9, 1])

@@ -28,11 +28,17 @@ class GlobalLib:
         return file_path
 
     @staticmethod
-    def change_positions(list_of_elements, position_1, position_2):
-        """Vertauscht zwei Elemente einer Liste direkt in der Liste (Dreieckstausch über ein Zwischenelement)."""
+    def change_positions(list_of_elements, position_1, position_2, verbose=False):
+        """Vertauscht zwei Elemente einer Liste direkt in der Liste (Dreieckstausch über ein Zwischenelement).
+
+        Mit `verbose=True` wird jeder Tausch ausgegeben: die beiden Positionen, die Werte und die Liste danach.
+        """
         temp_element = list_of_elements[position_1]
         list_of_elements[position_1] = list_of_elements[position_2]
         list_of_elements[position_2] = temp_element
+        if verbose:
+            print(f"Tausche Position {position_1} und {position_2}: "
+                  f"{list_of_elements[position_2]} <-> {list_of_elements[position_1]}  ->  {list_of_elements}")
 
     @staticmethod
     def print_empty_lines(param):

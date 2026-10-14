@@ -6,6 +6,7 @@ durchsichtig.
 """
 import math
 import random
+from builtins import enumerate
 
 import pygame
 

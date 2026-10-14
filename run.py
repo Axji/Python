@@ -16,7 +16,7 @@ GlobalLib.print_empty_lines(2)
 
 # Bubblesort
 GlobalLib.print_title("BubbleSort", 1)
-print("Random")
+print("Pseudo Random")
 List_to_sort = list(list_of_elements)  # Kopie, damit die Originalliste unverändert bleibt
 print(Sorting.bubble_sort(List_to_sort))
 

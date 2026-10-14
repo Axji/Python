@@ -4,6 +4,7 @@ import math
 import pygame
 
 from .constants import (
+    BLOCK_BUMP_FRAMES,
     ENEMY_STOMP_BOUNCE,
     FPS,
     SCALE,
@@ -15,7 +16,7 @@ from .constants import (
     START_LIVES,
     TILE,
 )
-from .entities import Enemy, Player
+from .entities import CoinPop, Enemy, Player
 from .level import Y_OFFSET, Level
 from .pixelart import Background, PlayerSprites, bullet_sprites, coin_sprite, enemy_frames, flag_sprite, make_tiles
 
@@ -56,6 +57,8 @@ class Game:
         self.enemies = [Enemy(x, y) for x, y in self.level.enemy_starts]
         self.coins = [coin.copy() for coin in self.level.coins]
         self.bullets = []
+        self.coin_pops = []   # Münzen, die gerade aus einem Block springen
+        self.bumps = {}       # (Spalte, Zeile) eines getroffenen Blocks -> Restzeit seines Hüpfers
         self.score = 0
         self.lives = START_LIVES
         self.state = PLAYING
@@ -113,7 +116,9 @@ class Game:
 
         self.check_bullet_hits()
         self.check_enemy_contact()
+        self.hit_blocks()
         self.collect_coins()
+        self.update_block_effects()
         self.bullets = [b for b in self.bullets if b.alive]
         self.enemies = [e for e in self.enemies if e.alive and e.rect.top < self.level.height + 64]
 
@@ -149,6 +154,29 @@ class Game:
             if self.player.rect.colliderect(coin):
                 self.coins.remove(coin)
                 self.score += SCORE_COIN
+
+    def hit_blocks(self):
+        """Stösst die Figur beim Springen von unten an einen Fragezeichen-Block, fällt eine Münze heraus.
+
+        Berührt der Kopf zwei Blöcke gleichzeitig, zählt der, der mehr unter der Figur liegt.
+        """
+        tiles = self.player.ceiling_tiles
+        if not tiles:
+            return
+        player_rect = self.player.rect
+        tile = max(tiles, key=lambda t: min(t.right, player_rect.right) - max(t.left, player_rect.left))
+        col, row = self.level.tile_of(tile)
+        if self.level.hit_block(col, row):
+            self.score += SCORE_COIN
+            self.bumps[(col, row)] = BLOCK_BUMP_FRAMES
+            self.coin_pops.append(CoinPop(tile.x + TILE // 2 - 4, tile.y - 8))
+
+    def update_block_effects(self):
+        """Lässt Block-Hüpfer und fliegende Münzen ablaufen."""
+        self.bumps = {pos: left - 1 for pos, left in self.bumps.items() if left > 1}
+        for pop in self.coin_pops:
+            pop.update()
+        self.coin_pops = [pop for pop in self.coin_pops if pop.alive]
 
     def lose_life(self, respawn):
         self.lives -= 1
@@ -186,8 +214,10 @@ class Game:
                     open_above = not self.level.is_solid(col, row - 1)
                     image = self.tiles["grass" if open_above else "dirt"]
                 else:
-                    image = self.tiles["brick" if char == "B" else "block"]
-                self.canvas.blit(image, (col * TILE - cam, row * TILE + Y_OFFSET))
+                    image = self.tiles[{"B": "brick", "?": "block", "U": "used"}[char]]
+                bump = self.bumps.get((col, row), 0)
+                lift = round(math.sin(bump / BLOCK_BUMP_FRAMES * math.pi) * 4)  # getroffener Block hüpft kurz nach oben
+                self.canvas.blit(image, (col * TILE - cam, row * TILE + Y_OFFSET - lift))
 
     def draw_objects(self, cam):
         flag = self.level.flag_rect
@@ -196,6 +226,8 @@ class Game:
         for coin in self.coins:
             bob = round(math.sin((self.ticks + coin.x) / 10) * 1.5)  # Münzen schweben leicht auf und ab
             self.canvas.blit(self.coin_image, (coin.x - cam, coin.y + bob))
+        for pop in self.coin_pops:  # Münzen, die gerade aus einem Block springen
+            self.canvas.blit(self.coin_image, (round(pop.pos.x) - cam, round(pop.pos.y)))
         for enemy in self.enemies:
             self.canvas.blit(self.enemy_images[enemy.frame], (enemy.rect.x - cam, enemy.rect.y))
         for bullet in self.bullets:

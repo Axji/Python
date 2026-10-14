@@ -152,7 +152,7 @@ def _speckled(color, speckles, rng, size=TILE, count=14):
 
 
 def make_tiles():
-    """Kacheln für Erde, Gras, Ziegel und Fragezeichen-Block."""
+    """Kacheln für Erde, Gras, Ziegel, Fragezeichen-Block und leeren Block."""
     rng = random.Random(7)
     dirt = _speckled((140, 84, 40), [(110, 62, 28), (166, 106, 56)], rng)
 
@@ -183,7 +183,13 @@ def make_tiles():
     mark = from_ascii(QUESTION_MARK, {"y": (130, 80, 10)})
     block.blit(mark, (4, 4))
 
-    return {"dirt": dirt, "grass": grass, "brick": brick, "block": block}
+    used = pygame.Surface((TILE, TILE))  # leerer Block: gleiche Form, aber ohne Fragezeichen und stumpfe Farbe
+    used.fill((150, 112, 72))
+    pygame.draw.rect(used, (96, 68, 40), (0, 0, TILE, TILE), 1)
+    for corner in ((2, 2), (TILE - 3, 2), (2, TILE - 3), (TILE - 3, TILE - 3)):
+        used.set_at(corner, (96, 68, 40))
+
+    return {"dirt": dirt, "grass": grass, "brick": brick, "block": block, "used": used}
 
 
 def flag_sprite():

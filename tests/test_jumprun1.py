@@ -6,8 +6,9 @@ import pytest
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 pygame = pytest.importorskip("pygame")
 
-from jumprun1.constants import JUMP_SPEED, MAX_BULLETS, TILE  # noqa: E402
+from jumprun1.constants import BLOCK_COINS, JUMP_SPEED, MAX_BULLETS, SCORE_COIN, TILE  # noqa: E402
 from jumprun1.entities import Bullet, Enemy, Player  # noqa: E402
+from jumprun1.game import Game  # noqa: E402
 from jumprun1.level import LEVEL_HEIGHT, LEVEL_WIDTH, Level  # noqa: E402
 from jumprun1.pixelart import PLAYER_BODY, PLAYER_LEGS, PlayerSprites, from_ascii  # noqa: E402
 
@@ -232,3 +233,80 @@ def test_goal_zone_reaches_above_the_flag():
     assert level.goal_rect.top < level.flag_rect.top  # man kann das Ziel nicht überspringen
     assert level.goal_rect.bottom >= level.flag_rect.bottom
     assert level.goal_rect.x == level.flag_rect.x
+
+
+# ---------------------------------------------------------------- Fragezeichen-Blöcke
+
+
+def test_question_block_gives_three_coins_then_becomes_empty():
+    level = Level()
+    col, row = next(iter(level.block_coins))
+    for _ in range(3):
+        assert level.char_at(col, row) == "?"
+        assert level.hit_block(col, row)
+    assert level.char_at(col, row) == "U"
+    assert level.is_solid(col, row)  # der leere Block bleibt fest
+    assert not level.hit_block(col, row)  # nichts mehr zu holen
+
+
+def test_brick_gives_no_coin():
+    level = Level()
+    brick = next((c, r) for r, line in enumerate(level.grid) for c, ch in enumerate(line) if ch == "B")
+    assert not level.hit_block(*brick)
+
+
+class _Keys:
+    """Ersatz für pygame.key.get_pressed(): nur die genannten Tasten sind gedrückt."""
+
+    def __init__(self, *pressed):
+        self.pressed = set(pressed)
+
+    def __getitem__(self, key):
+        return key in self.pressed
+
+
+def clean_game():
+    """Spiel ohne Gegner und Bodenmünzen, damit nur die Block-Punkte zählen."""
+    game = Game()
+    game.enemies = []
+    game.coins = []
+    return game
+
+
+def _jump_under(game, monkeypatch, col, row):
+    """Stellt die Figur unter den Block (Spalte, Zeile), lässt sie springen und wartet, bis sie wieder steht."""
+    monkeypatch.setattr(pygame.key, "get_pressed", lambda: _Keys(pygame.K_SPACE))
+    player = game.player
+    ground_y = game.level.player_start[1]
+    player.pos.update(col * TILE + 2, ground_y)
+    player.rect.topleft = (col * TILE + 2, ground_y)
+    player.vel.update(0, 0)
+    for _ in range(5):
+        game.update()
+    player.request_jump()
+    for _ in range(45):
+        game.update()
+
+
+def test_jumping_against_question_block_drops_coin_and_score(monkeypatch):
+    game = clean_game()
+    col, row = next(k for k in game.level.block_coins)
+    _jump_under(game, monkeypatch, col, row)
+    assert game.score == SCORE_COIN
+    assert game.level.block_coins[(col, row)] == BLOCK_COINS - 1
+
+
+def test_block_runs_empty_after_three_jumps(monkeypatch):
+    game = clean_game()
+    col, row = next(k for k in game.level.block_coins)
+    for _ in range(4):
+        _jump_under(game, monkeypatch, col, row)
+    assert game.level.char_at(col, row) == "U"
+    assert game.score == BLOCK_COINS * SCORE_COIN  # die vierte Berührung bringt nichts mehr
+
+
+def test_jumping_against_brick_gives_nothing(monkeypatch):
+    game = clean_game()
+    brick_col = next(c for c in range(8, 12) if game.level.char_at(c, 6) == "B")
+    _jump_under(game, monkeypatch, brick_col, 6)
+    assert game.score == 0

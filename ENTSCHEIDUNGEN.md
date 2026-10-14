@@ -240,6 +240,13 @@ kann. Die Wetterdateien lassen sich mit `GetWeatherData.py` jederzeit neu laden.
 und bleibt offen.
 **Folge:** In `CarRace/` ist die Regel E402 abgeschaltet, weil dort `os.chdir` bewusst vor den Importen steht.
 
+### E6 – pygame-ce statt pygame (2026-10-14)
+**Entscheidung:** `requirements.txt` und CI nutzen `pygame-ce` (ab 2.5.8) statt `pygame`. Der Code bleibt unverändert, `import pygame`
+funktioniert weiter.
+**Grund:** `pygame-ce` ist der aktiv gepflegte Fork. `pygame` 2.6.1 ist von 2024, und für Python 3.14 gibt es von `pygame` kein fertiges
+Paket (die Installation versucht zu kompilieren und schlägt fehl). `pygame-ce` 2.5.8 liess sich unter Python 3.14 installieren.
+**Folge:** `pygame` und `pygame-ce` dürfen nicht gleichzeitig installiert sein. Bei einer bestehenden `venv` erst `pip uninstall pygame`.
+
 ---
 
 ## Offene Punkte
@@ -248,11 +255,10 @@ und bleibt offen.
 |---|---|---|
 | Alte Commits auf GitHub | Beim GitHub Support das Löschen der gecachten Commits und der Pull-Request-Refs beantragen (A2) | Besitzer |
 | Backup mit altem Passwort | `C:\dev\Phyton_backup_vor_historie.git` löschen, sobald nichts mehr gebraucht wird | Besitzer |
-| Python 3.14 | Entscheiden, ob umgestellt wird. Der Versuch, es parallel zu installieren, schlug mit Fehler 1638 („andere Version bereits installiert") fehl. Vorher prüfen, ob alle Pakete (besonders `pygame` und `pymssql`) Wheels für 3.14 haben | Besitzer |
+| Python 3.14 | Entscheiden, ob umgestellt wird. Der Versuch, es parallel zu installieren, schlug mit Fehler 1638 („andere Version bereits installiert") fehl. Vorher prüfen, ob alle Pakete (besonders `pymssql`) Wheels für 3.14 haben. `pygame-ce` läuft unter 3.14 (E6) | Besitzer |
 | Sihlcity-ID | Bestätigen, dass `704` (URL) richtig ist und nicht `784` | Besitzer |
 | Lokaler Branch | `cleanup/review-fixes` ist gemergt und auf GitHub gelöscht, lokal noch vorhanden | Besitzer |
 | `pymssql` | Steht in `requirements.txt`, wird aber nur von `AzureMsSql.py` genutzt, das nirgends aufgerufen wird. Entfernen oder nutzen | Besitzer |
-| pygame | `pygame` 2.6.1 ist von 2024. `pygame-ce` ist der aktiv gepflegte Fork mit gleichem `import pygame`, nicht geprüft | Besitzer |
 
 ---
 

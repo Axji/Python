@@ -1,6 +1,6 @@
 # jumprun1
 
-Grundgerüst für ein Jump-and-Run im Stil von Giana Sisters und Super Mario (pygame). Die Spielfläche ist 320 x 180
+Grundgerüst für ein Jump-and-Run im Stil von Giana Sisters und Super Mario (pygame-ce). Die Spielfläche ist 320 x 180
 Pixel gross und wird vierfach vergrössert, dadurch sieht alles pixelig aus. Es werden keine Bilddateien geladen:
 Figur, Gegner, Kacheln und Hintergrund entstehen beim Start aus Textbildern und einfachen Zeichenbefehlen.
 
@@ -10,7 +10,7 @@ Figur, Gegner, Kacheln und Hintergrund entstehen beim Start aus Textbildern und 
 python jumprun1/main.py
 ```
 
-Voraussetzung: `pip install -r requirements.txt` (pygame).
+Voraussetzung: `pip install -r requirements.txt` (pygame-ce).
 
 ## Steuerung
 

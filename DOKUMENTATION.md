@@ -35,8 +35,12 @@ Alle Skripte werden mit dem Python aus der `venv` gestartet, zum Beispiel:
 .\venv\Scripts\python.exe Bingo.py
 ```
 
-**Pakete** (`requirements.txt`): `requests`, `numpy`, `pillow`, `pygame`, `pymssql`. Alles andere (SQLite, CSV, Tkinter)
+**Pakete** (`requirements.txt`): `requests`, `numpy`, `pillow`, `pygame-ce`, `pymssql`. Alles andere (SQLite, CSV, Tkinter)
 gehört zur Standardbibliothek von Python.
+
+**pygame-ce statt pygame:** Das Projekt nutzt `pygame-ce` (der gepflegte Fork). Im Code bleibt `import pygame` unverändert. `pygame` und
+`pygame-ce` dürfen nicht gleichzeitig installiert sein. Beim Umstellen einer bestehenden `venv` erst `pip uninstall pygame` und dann
+`pip install -r requirements.txt` ausführen.
 
 **VS Code:** Der Ordner `.vscode/` enthält die Einstellungen. Der Interpreter zeigt auf `venv`, Ruff formatiert beim
 Speichern und sortiert die Imports. Mit **F5** wird die geöffnete Datei im Debugger gestartet. Empfohlene
@@ -63,12 +67,12 @@ uff.exe check .
 | `Fitnesspark_belegung.py` | Auslastung der Fitnessparks abrufen und speichern | requests |
 | `fitnesspark_db.py` | Gemeinsamer SQLite-Zugriff der Fitnesspark-Skripte | – |
 | `fitnessparks/` | Import, Bereinigung und Auswertung der Fitnesspark-Daten | – |
-| `CarRace/` | Autorennen mit regelbasierter und lernender KI | pygame |
+| `CarRace/` | Autorennen mit regelbasierter und lernender KI | pygame-ce |
 | `Weather/` | Klimadaten von MeteoSchweiz laden, SQLite-Ablage | – |
 | `mandelbaum.py` | Mandelbrot-Generator mit Fenster | numpy, pillow |
 | `matrix_simulation.py` | 10×10-Matrix, jede Zelle zählt in einem eigenen Thread | – |
-| `Bingo.py`, `JumpAndRun1.py` | Kleine Spiele | pygame (JumpAndRun) |
-| `jumprun1/` | Jump-and-Run mit Pixeloptik, Schiessen und Plan (siehe `jumprun1/README.md`) | pygame |
+| `Bingo.py`, `JumpAndRun1.py` | Kleine Spiele | pygame-ce (JumpAndRun) |
+| `jumprun1/` | Jump-and-Run mit Pixeloptik, Schiessen und Plan (siehe `jumprun1/README.md`) | pygame-ce |
 | `sort.py`, `run.py`, `global_lib.py` | Sortieralgorithmen mit Zählern und Demo | – |
 
 ---
@@ -144,7 +148,7 @@ fehlende Zeile „leer" oder „unverändert" bedeutet (siehe Entscheidungen).
 
 ## 4. CarRace (Autorennen mit KI)
 
-Rennspiel mit pygame. Alle Befehle im Ordner `CarRace` oder mit vollem Pfad (die Skripte wechseln selbst in ihren
+Rennspiel mit pygame-ce. Alle Befehle im Ordner `CarRace` oder mit vollem Pfad (die Skripte wechseln selbst in ihren
 Ordner).
 
 ```bash

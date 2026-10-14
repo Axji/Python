@@ -1,4 +1,7 @@
-"""Demo-Skript: führt Bubblesort und Shakersort auf einer zufälligen, einer sortierten und einer umgekehrten Liste aus."""
+"""Demo-Skript: führt Bubblesort und Shakersort auf einer zufälligen, einer sortierten und einer umgekehrten Liste aus.
+
+Alle Aufrufe laufen mit `verbose=True`, jeder Tausch wird also ausgegeben.
+"""
 # from global_lib import *
 from global_lib import GlobalLib
 from sort import Sorting
@@ -18,27 +21,27 @@ GlobalLib.print_empty_lines(2)
 GlobalLib.print_title("BubbleSort", 1)
 print("Pseudo Random")
 List_to_sort = list(list_of_elements)  # Kopie, damit die Originalliste unverändert bleibt
-print(Sorting.bubble_sort(List_to_sort))
+print(Sorting.bubble_sort(List_to_sort, verbose=True))
 
 print("Sorted")
 List_to_sort = list(list_of_elements_sorted)
-print(Sorting.bubble_sort(List_to_sort))
+print(Sorting.bubble_sort(List_to_sort, verbose=True))
 
 print("Reversed")
 List_to_sort = list(list_of_elements_reversed)
-print(Sorting.bubble_sort(List_to_sort))
+print(Sorting.bubble_sort(List_to_sort, verbose=True))
 
 # Shakersort
 GlobalLib.print_title("Shakersort", 1)
 
 print("Random")
 List_to_sort = list(list_of_elements)
-print(Sorting.shaker_sort(List_to_sort))
+print(Sorting.shaker_sort(List_to_sort, verbose=True))
 
 print("Sorted")
 List_to_sort = list(list_of_elements_sorted)
-print(Sorting.shaker_sort(List_to_sort))
+print(Sorting.shaker_sort(List_to_sort, verbose=True))
 
 print("Reversed")
 List_to_sort = list(list_of_elements_reversed)
-print(Sorting.shaker_sort(List_to_sort))
+print(Sorting.shaker_sort(List_to_sort, verbose=True))

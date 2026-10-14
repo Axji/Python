@@ -11,6 +11,7 @@ class Sorting:
 
     tests = 0  # Anzahl Vergleiche
     moves = 0  # Anzahl Vertauschungen
+    distributions = 0  # Quicksort: Anzahl Verteilungen auf kleiner/gleich/grösser im letzten Aufruf (ohne Pivot-Wahl)
 
     @staticmethod
     def reset_counters():
@@ -42,6 +43,8 @@ class Sorting:
                     Sorting.moves += 1
                     swapped = True  # Zwei Elemente in falscher Reihenfolge gefunden
                     GlobalLib.change_positions(list_of_elements, element, element+1, verbose)
+        if verbose:
+            Sorting._print_summary("Tausch", "Tausche", Sorting.moves, Sorting.tests)
         return list_of_elements
 
     @staticmethod
@@ -65,6 +68,8 @@ class Sorting:
                         swapped = True  # Zwei Elemente in falscher Reihenfolge gefunden
                         GlobalLib.change_positions(list_of_elements, element, element+1, verbose)
                 if not swapped:
+                    if verbose:
+                        Sorting._print_summary("Tausch", "Tausche", Sorting.moves, Sorting.tests)
                     return list_of_elements
 
     @staticmethod
@@ -75,8 +80,23 @@ class Sorting:
         zurückgegeben. Die Zähler werden nicht zurückgesetzt, dafür `reset_counters()` aufrufen.
         Laufzeit im Mittel O(n log n), im schlechtesten Fall O(n²).
         Quicksort tauscht hier nicht, sondern verteilt die Werte auf drei Listen. Mit `verbose=True` wird jede Verteilung
-        ausgegeben (Wert, Pivot und Ziel-Liste).
+        ausgegeben (Wert, Pivot und Ziel-Liste), am Ende die Zahl der Verschiebungen dieses Aufrufs.
         """
+        tests_before = Sorting.tests  # die Zähler laufen weiter, gezählt wird die Differenz
+        Sorting.distributions = 0
+        result = Sorting._quick_sort(arr, verbose)
+        if verbose:
+            Sorting._print_summary("Verschiebung", "Verschiebungen", Sorting.distributions, Sorting.tests - tests_before)
+        return result
+
+    @staticmethod
+    def _print_summary(singular, plural, count, tests):
+        """Zusammenfassung am Ende eines Laufs mit verbose=True: wie viele Tausche/Verschiebungen und Vergleiche es gab."""
+        print(f"Fertig: {count} {singular if count == 1 else plural}, {tests} Vergleiche")
+
+    @staticmethod
+    def _quick_sort(arr, verbose):
+        """Rekursiver Teil von `quick_sort`. Die Zusammenfassung kommt nur einmal, vom äusseren Aufruf."""
         less = []        # Werte kleiner als das Pivot-Element
         pivot_list = []  # Werte, die dem Pivot-Element entsprechen
         more = []        # Werte grösser als das Pivot-Element
@@ -98,9 +118,10 @@ class Sorting:
                 else:
                     pivot_list.append(i)
                     target = "gleich"
+                Sorting.distributions += 1
                 if verbose:
                     print(f"Verschiebe {i} nach '{target}' (Pivot {pivot})")
             # Die beiden Teillisten rekursiv sortieren und zusammensetzen
-            less = Sorting.quick_sort(less, verbose)
-            more = Sorting.quick_sort(more, verbose)
+            less = Sorting._quick_sort(less, verbose)
+            more = Sorting._quick_sort(more, verbose)
             return less + pivot_list + more

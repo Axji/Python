@@ -1,5 +1,5 @@
 """Spielfigur, Gegner und Kugeln samt Physik (Schwerkraft, Kollision mit den Kacheln)."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pygame
 
@@ -8,6 +8,7 @@ from .constants import (
     AIR_JUMP_SPEED,
     BULLET_LIFETIME,
     BULLET_SPEED,
+    COIN_POP_FRAMES,
     COYOTE_FRAMES,
     ENEMY_SPEED,
     FRICTION,
@@ -32,6 +33,7 @@ class MoveResult:
     on_ground: bool = False
     hit_wall: bool = False
     hit_ceiling: bool = False
+    ceiling_tiles: list = field(default_factory=list)  # Kacheln, an die der Kopf gestossen ist
 
 
 def move_body(body, level):
@@ -63,6 +65,7 @@ def move_body(body, level):
             elif body.vel.y < 0:
                 body.rect.top = tile.bottom
                 result.hit_ceiling = True
+                result.ceiling_tiles.append(tile)
             body.pos.y = body.rect.y
             body.vel.y = 0
 
@@ -116,6 +119,7 @@ class Player:
         self.coyote = 0          # Restzeit, in der nach dem Verlassen einer Kante noch gesprungen werden darf
         self.jump_buffer = 0     # Restzeit, in der ein früh gedrückter Sprung noch gilt
         self.jumps_used = 0      # Sprünge seit der letzten Landung (der Absprung vom Boden zählt als erster)
+        self.ceiling_tiles = []
         self.shoot_cooldown = 0
         self.invulnerable = 0    # Restzeit der Schutzphase nach einem Treffer
         self.anim = 0
@@ -177,6 +181,7 @@ class Player:
         self.vel.y = min(self.vel.y + GRAVITY, MAX_FALL)
         result = move_body(self, level)
         self.on_ground = result.on_ground
+        self.ceiling_tiles = result.ceiling_tiles  # Kacheln, an die der Kopf in diesem Bild gestossen ist (Fragezeichen-Blöcke)
         if result.hit_wall:
             self.vel.x = 0
 
@@ -223,3 +228,21 @@ class Enemy:
     @property
     def frame(self):
         return (self.anim // 12) % 2
+
+
+class CoinPop:
+    """Eine Münze, die aus einem Block nach oben springt und zurückfällt. Nur Bewegung: die Punkte gibt es sofort."""
+
+    def __init__(self, x, y):
+        self.pos = pygame.Vector2(x, y)
+        self.vel = pygame.Vector2(0, -3.2)
+        self.life = COIN_POP_FRAMES
+
+    @property
+    def alive(self):
+        return self.life > 0
+
+    def update(self):
+        self.vel.y += 0.25
+        self.pos += self.vel
+        self.life -= 1

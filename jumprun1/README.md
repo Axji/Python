@@ -25,7 +25,7 @@ Voraussetzung: `pip install -r requirements.txt` (pygame).
 ## Spielregeln
 
 - Ziel ist die Fahne am Ende des Plans (die Zielzone reicht bis zum oberen Rand, man kann sie nicht überspringen).
-- Münzen geben 10 Punkte. Gegner lassen sich abschiessen (100 Punkte) oder von oben anspringen (200 Punkte).
+- Münzen geben 10 Punkte. **Fragezeichen-Blöcke:** von unten anspringen, dann fällt eine Münze heraus (10 Punkte, 3 Münzen je Block, danach ist der Block leer). Gegner lassen sich abschiessen (100 Punkte) oder von oben anspringen (200 Punkte).
 - Ein Treffer von der Seite oder ein Sturz in ein Loch kostet ein Leben (3 Leben). Nach einem Treffer ist die Figur kurz geschützt.
 
 ## Aufbau
@@ -51,6 +51,6 @@ Die Tests liegen in `tests/test_jumprun1.py` (laufen ohne Fenster).
 
 ## Noch offen (Ideen für den Ausbau)
 
-- Die Fragezeichen-Blöcke sind nur fest, sie geben noch nichts frei.
+- Die Fragezeichen-Blöcke geben nur Münzen her, keine anderen Überraschungen (Pilz, Waffen-Upgrade ...).
 - Nur ein Gegnertyp, keine Gegner, die zurückschiessen.
 - Kein Ton, kein Titelbildschirm, nur ein Plan.

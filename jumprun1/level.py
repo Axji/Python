@@ -1,18 +1,19 @@
 """Der Spielplan: ein Raster aus Kacheln, dazu Startpunkte von Figur, Gegnern, Münzen und Ziel.
 
 Zeichen im Raster:
-    .  leer          #  Erde/Gras        B  Ziegel        ?  Fragezeichen-Block (fest, ohne Wirkung)
+    .  leer          #  Erde/Gras        B  Ziegel        ?  Fragezeichen-Block (gibt von unten Münzen her)
     P  Start         E  Gegner           C  Münze          F  Ziel (Fahne)
+    U  leerer Block (entsteht aus einem Fragezeichen-Block, wenn alle Münzen heraus sind)
 """
 import pygame
 
-from .constants import SCREEN_H, TILE
+from .constants import BLOCK_COINS, SCREEN_H, TILE
 
 LEVEL_WIDTH = 80          # Spalten
 LEVEL_HEIGHT = 11         # Zeilen
 GROUND_ROWS = 2           # die untersten zwei Zeilen sind Boden
 GAPS = [(21, 23), (41, 43), (58, 60), (66, 68)]  # Löcher im Boden (von Spalte, bis Spalte), je 3 Kacheln breit
-SOLID = "#B?"             # Zeichen, durch die man nicht hindurchkommt
+SOLID = "#B?U"            # Zeichen, durch die man nicht hindurchkommt (U = leerer Block)
 Y_OFFSET = SCREEN_H - LEVEL_HEIGHT * TILE  # schiebt den Plan nach unten, damit er den Bildschirm genau füllt
 
 
@@ -37,9 +38,9 @@ def build_grid():
     put(2, 8, "P")
     span(6, 8, 8, "C")                       # Münzen am Boden
 
-    span(8, 11, 7, "B")                      # kleine Plattform zum Hinaufspringen
-    put(9, 7, "?")
-    put(10, 7, "?")
+    span(8, 11, 6, "B")                      # kleine Plattform zum Hinaufspringen
+    put(9, 6, "?")
+    put(10, 6, "?")
     span(12, 14, 5, "B")                     # zweite, höhere Plattform (nicht vor dem Loch, sonst stösst man beim Absprung an)
     span(12, 14, 4, "C")
     span(21, 23, 6, "C")                     # Münzen über dem ersten Loch
@@ -74,6 +75,30 @@ class Level:
         self.flag_rect = pygame.Rect(0, 0, 0, 0)
         self.goal_rect = pygame.Rect(0, 0, 0, 0)  # Zielzone: wie die Fahne, aber bis zum oberen Rand, damit man sie nicht überspringt
         self._find_objects()
+        # Wie viele Münzen jeder Fragezeichen-Block noch hergibt, mit (Spalte, Zeile) als Schlüssel
+        self.block_coins = {
+            (col, row): BLOCK_COINS
+            for row, line in enumerate(self.grid)
+            for col, char in enumerate(line)
+            if char == "?"
+        }
+
+    def hit_block(self, col, row):
+        """Der Kopf der Figur ist von unten an diese Kachel gestossen. Gibt True zurück, wenn eine Münze herausfällt.
+
+        Nach der letzten Münze wird aus dem Fragezeichen-Block ein leerer Block (U), er bleibt fest.
+        """
+        if self.char_at(col, row) != "?":
+            return False
+        self.block_coins[(col, row)] -= 1
+        if self.block_coins[(col, row)] <= 0:
+            self.grid[row][col] = "U"
+        return True
+
+    @staticmethod
+    def tile_of(rect):
+        """Spalte und Zeile der Kachel, die dieses Rechteck (aus solid_rects_near) ist."""
+        return rect.x // TILE, (rect.y - Y_OFFSET) // TILE
 
     def _find_objects(self):
         for row, line in enumerate(self.grid):

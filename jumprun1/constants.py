@@ -41,3 +41,8 @@ INVULNERABLE_FRAMES = 90  # Schutzzeit nach einem Treffer (die Figur blinkt)
 SCORE_COIN = 10
 SCORE_SHOT = 100
 SCORE_STOMP = 200
+
+# Fragezeichen-Blöcke: von unten anspringen lässt Münzen herausfallen
+BLOCK_COINS = 3          # so viele Münzen gibt ein Block her, danach ist er leer
+BLOCK_BUMP_FRAMES = 8    # so lange hüpft der Block nach dem Treffer nach oben
+COIN_POP_FRAMES = 30     # so lange fliegt die Münze aus dem Block (nur Bewegung, die Punkte gibt es sofort)

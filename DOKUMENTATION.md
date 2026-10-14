@@ -68,6 +68,7 @@ uff.exe check .
 | `mandelbaum.py` | Mandelbrot-Generator mit Fenster | numpy, pillow |
 | `matrix_simulation.py` | 10×10-Matrix, jede Zelle zählt in einem eigenen Thread | – |
 | `Bingo.py`, `JumpAndRun1.py` | Kleine Spiele | pygame (JumpAndRun) |
+| `jumprun1/` | Jump-and-Run mit Pixeloptik, Schiessen und Plan (siehe `jumprun1/README.md`) | pygame |
 | `sort.py`, `run.py`, `global_lib.py` | Sortieralgorithmen mit Zählern und Demo | – |
 
 ---

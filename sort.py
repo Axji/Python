@@ -1,4 +1,5 @@
-"""Sortieralgorithmen (Bubble-, Shaker- und Quicksort) mit Zählern für Vergleiche und Vertauschungen."""
+"""Sortieralgorithmen (Bubble-, Shaker- und Quicksort, Quicksort auch als In-Place-Version) mit Zählern für Vergleiche
+und Vertauschungen."""
 from global_lib import GlobalLib
 
 
@@ -93,6 +94,60 @@ class Sorting:
         if verbose >= 1:
             Sorting._print_summary("Verschiebung", "Verschiebungen", Sorting.distributions, Sorting.tests - tests_before)
         return result
+
+    @staticmethod
+    def quick_sort_in_place(list_of_elements, verbose=0):
+        """Quicksort, der wie Bubble- und Shakersort in der übergebenen Liste tauscht (In-Place) und sie zurückgibt.
+
+        Als Pivot dient das mittlere Element des jeweiligen Bereichs. Es wird ans Ende getauscht, danach wandern alle
+        kleineren Werte nach vorne und das Pivot an seinen endgültigen Platz. Die beiden Teilbereiche werden rekursiv
+        sortiert, der kleinere zuerst, damit die Rekursion flach bleibt. Laufzeit im Mittel O(n log n), im schlechtesten
+        Fall O(n²). Ausgabe über `verbose`: 0 keine, 1 Summen, 2 auch jeder Tausch.
+        """
+        Sorting._check_verbose(verbose)
+        Sorting.tests = 0
+        Sorting.moves = 0
+        Sorting._quick_sort_in_place(list_of_elements, 0, len(list_of_elements) - 1, verbose)
+        if verbose >= 1:
+            Sorting._print_summary("Tausch", "Tausche", Sorting.moves, Sorting.tests)
+        return list_of_elements
+
+    @staticmethod
+    def _quick_sort_in_place(list_of_elements, low, high, verbose):
+        """Sortiert den Bereich von `low` bis `high` (beide eingeschlossen) in der Liste."""
+        while low < high:
+            pivot_position = Sorting._partition(list_of_elements, low, high, verbose)
+            # Den kleineren Teil rekursiv, den grösseren in der Schleife sortieren: die Rekursionstiefe bleibt klein
+            if pivot_position - low < high - pivot_position:
+                Sorting._quick_sort_in_place(list_of_elements, low, pivot_position - 1, verbose)
+                low = pivot_position + 1
+            else:
+                Sorting._quick_sort_in_place(list_of_elements, pivot_position + 1, high, verbose)
+                high = pivot_position - 1
+
+    @staticmethod
+    def _partition(list_of_elements, low, high, verbose):
+        """Teilt den Bereich um das Pivot und gibt dessen endgültige Position zurück. Links davon stehen nur kleinere Werte."""
+        middle = (low + high) // 2
+        if middle != high:
+            Sorting._swap(list_of_elements, middle, high, verbose)  # Pivot ans Ende, damit es beim Teilen nicht im Weg ist
+        pivot = list_of_elements[high]
+        store = low  # Position, an die der nächste kleinere Wert gehört
+        for position in range(low, high):
+            Sorting.tests += 1
+            if list_of_elements[position] < pivot:
+                if position != store:
+                    Sorting._swap(list_of_elements, position, store, verbose)
+                store += 1
+        if store != high:
+            Sorting._swap(list_of_elements, store, high, verbose)  # Pivot an seinen endgültigen Platz
+        return store
+
+    @staticmethod
+    def _swap(list_of_elements, position_1, position_2, verbose):
+        """Tauscht zwei Elemente, zählt den Tausch und gibt ihn ab Stufe 2 aus."""
+        Sorting.moves += 1
+        GlobalLib.change_positions(list_of_elements, position_1, position_2, verbose >= 2)
 
     @staticmethod
     def _check_verbose(verbose):

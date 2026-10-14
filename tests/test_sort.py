@@ -15,7 +15,7 @@ CASES = {
 
 
 @pytest.mark.parametrize("name", CASES)
-@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort])
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort, Sorting.quick_sort_in_place])
 def test_sorts_like_sorted(algorithm, name):
     data = list(CASES[name])
     assert algorithm(data) == sorted(CASES[name])
@@ -58,7 +58,7 @@ def test_verbose_prints_every_swap(algorithm, capsys):
     assert summary.startswith("Fertig: 2 Tausche, ")  # am Ende die Zahl der Tausche
 
 
-@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort])
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort, Sorting.quick_sort_in_place])
 def test_not_verbose_prints_nothing(algorithm, capsys):
     algorithm([3, 1, 2])
     assert capsys.readouterr().out == ""
@@ -109,7 +109,7 @@ def test_verbose_quick_sort_summary_counts_only_this_call(capsys):
 # ---------------------------------------------------------------- Ausgabe-Stufen (verbose 0, 1, 2)
 
 
-@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort])
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort, Sorting.quick_sort_in_place])
 def test_level_0_prints_nothing(algorithm, capsys):
     algorithm([3, 1, 2], verbose=0)
     assert capsys.readouterr().out == ""
@@ -130,7 +130,7 @@ def test_level_1_quick_sort_prints_only_the_summary(capsys):
     assert lines[0].startswith("Fertig: ")
 
 
-@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort])
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort, Sorting.quick_sort_in_place])
 def test_level_2_prints_details_and_summary(algorithm, capsys):
     algorithm([3, 1, 2], verbose=2)
     lines = capsys.readouterr().out.strip().splitlines()
@@ -138,7 +138,7 @@ def test_level_2_prints_details_and_summary(algorithm, capsys):
     assert lines[-1].startswith("Fertig: ")
 
 
-@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort])
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort, Sorting.quick_sort_in_place])
 def test_level_2_output_contains_level_1_output(algorithm, capsys):
     algorithm([5, 2, 4, 1], verbose=1)
     summary = capsys.readouterr().out.strip()
@@ -154,8 +154,62 @@ def test_true_counts_as_level_1_and_false_as_level_0(capsys):
     assert capsys.readouterr().out == ""
 
 
-@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort])
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort, Sorting.quick_sort_in_place])
 @pytest.mark.parametrize("level", [3, -1, "2", None])
 def test_invalid_level_raises(algorithm, level):
     with pytest.raises(ValueError):
         algorithm([2, 1], verbose=level)
+
+
+# ---------------------------------------------------------------- Quicksort In-Place
+
+
+def test_in_place_quick_sort_sorts_the_given_list_and_returns_it():
+    data = [3, 1, 2, 3, 0]
+    result = Sorting.quick_sort_in_place(data)
+    assert result is data  # dieselbe Liste, nicht eine neue
+    assert data == [0, 1, 2, 3, 3]
+
+
+def test_in_place_quick_sort_matches_sorted_on_many_random_lists():
+    rng = random.Random(42)
+    for _ in range(300):
+        data = [rng.randrange(20) for _ in range(rng.randrange(0, 30))]
+        assert Sorting.quick_sort_in_place(list(data)) == sorted(data)
+
+
+def test_in_place_quick_sort_handles_sorted_and_equal_lists_without_deep_recursion():
+    big_sorted = list(range(2000))
+    assert Sorting.quick_sort_in_place(list(big_sorted)) == big_sorted
+    assert Sorting.quick_sort_in_place([7] * 300) == [7] * 300
+
+
+def test_in_place_quick_sort_verbose_prints_every_swap_and_summary(capsys):
+    data = [5, 2, 4, 1, 3]
+    Sorting.quick_sort_in_place(data, verbose=2)
+    lines = capsys.readouterr().out.strip().splitlines()
+    swaps, summary = lines[:-1], lines[-1]
+    assert len(swaps) == Sorting.moves
+    assert all(line.startswith("Tausche Position") for line in swaps)
+    assert swaps[-1].endswith("[1, 2, 3, 4, 5]")
+    assert summary == f"Fertig: {Sorting.moves} Tausche, {Sorting.tests} Vergleiche"
+
+
+def test_in_place_quick_sort_level_1_prints_only_summary(capsys):
+    Sorting.quick_sort_in_place([5, 2, 4, 1, 3], verbose=1)
+    lines = capsys.readouterr().out.strip().splitlines()
+    assert len(lines) == 1
+    assert lines[0].startswith("Fertig: ")
+
+
+def test_in_place_quick_sort_resets_counters_each_call():
+    Sorting.quick_sort_in_place([5, 2, 4, 1, 3])
+    first = (Sorting.tests, Sorting.moves)
+    Sorting.quick_sort_in_place([5, 2, 4, 1, 3])
+    assert (Sorting.tests, Sorting.moves) == first  # wie Bubble- und Shakersort: Zähler beginnen neu
+
+
+def test_in_place_quick_sort_needs_no_swaps_on_one_element_or_empty_list():
+    assert Sorting.quick_sort_in_place([]) == []
+    assert Sorting.quick_sort_in_place([4]) == [4]
+    assert Sorting.moves == 0

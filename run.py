@@ -1,4 +1,4 @@
-"""Demo-Skript: führt Bubblesort, Shakersort und Quicksort auf einer zufälligen, einer sortierten und einer umgekehrten Liste aus.
+"""Demo-Skript: führt Bubblesort, Shakersort und Quicksort (neue Liste und In-Place) auf einer zufälligen, einer sortierten und einer umgekehrten Liste aus.
 
 Alle Aufrufe laufen mit `verbose=1`: am Ende jedes Laufs werden die Summen (Tausche bzw. Verschiebungen und Vergleiche) ausgegeben.
 (`verbose=2` zeigt zusätzlich jeden einzelnen Tausch, `verbose=0` gibt nichts aus.)
@@ -62,3 +62,19 @@ print(Sorting.quick_sort(List_to_sort, verbose=1))
 print("Reversed")
 List_to_sort = list(list_of_elements_reversed)
 print(Sorting.quick_sort(List_to_sort, verbose=1))
+
+
+# Quicksort In-Place (tauscht in der übergebenen Liste wie Bubble- und Shakersort)
+GlobalLib.print_title("Quicksort In-Place", 1)
+
+print("Pseudo Random")
+List_to_sort = list(list_of_elements)
+print(Sorting.quick_sort_in_place(List_to_sort, verbose=1))
+
+print("Sorted")
+List_to_sort = list(list_of_elements_sorted)
+print(Sorting.quick_sort_in_place(List_to_sort, verbose=1))
+
+print("Reversed")
+List_to_sort = list(list_of_elements_reversed)
+print(Sorting.quick_sort_in_place(List_to_sort, verbose=1))

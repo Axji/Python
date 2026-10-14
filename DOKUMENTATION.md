@@ -249,7 +249,7 @@ STAC-API von data.geo.admin.ch.
 | `matrix_simulation.py` | 100 Threads zählen je eine Zelle von 0 bis 9 hoch. Start, Stop, Reset. Das Fenster wird nur im Hauptthread aktualisiert. |
 | `Bingo.py` | Zieht Zahlen 1 bis 75, bis eine Reihe, Spalte oder Diagonale voll ist. Freies Feld in der Mitte, markierte Zahlen als `X`. |
 | `JumpAndRun1.py` | Pfeile bewegen, Leertaste springt, Doppelsprung durch Loslassen und erneutes Drücken. |
-| `run.py` / `sort.py` | Vergleicht Bubblesort und Shakersort auf drei Listen. `Sorting` zählt Vergleiche und Vertauschungen, Quicksort ist ebenfalls enthalten. Jedes Verfahren hat den Parameter `verbose=False`: mit `verbose=True` wird jeder Tausch ausgegeben (bei Quicksort jede Verteilung auf die Listen kleiner, gleich und grösser). Am Ende steht eine Zusammenfassung, zum Beispiel `Fertig: 2 Tausche, 4 Vergleiche` (bei Quicksort Verschiebungen), zum Beispiel `Sorting.bubble_sort(liste, verbose=True)`. |
+| `run.py` / `sort.py` | Vergleicht Bubblesort und Shakersort auf drei Listen. `Sorting` zählt Vergleiche und Vertauschungen, Quicksort ist ebenfalls enthalten. Jedes Verfahren hat den Parameter `verbose` mit drei Stufen: `0` keine Ausgabe (Standard), `1` nur die Summen am Ende, zum Beispiel `Fertig: 2 Tausche, 4 Vergleiche` (bei Quicksort Verschiebungen), `2` zusätzlich jeder einzelne Tausch (bei Quicksort jede Verteilung auf die Listen kleiner, gleich und grösser), zum Beispiel `Sorting.bubble_sort(liste, verbose=2)`. |
 
 ---
 

@@ -11,6 +11,8 @@ class Sorting:
 
     tests = 0  # Anzahl Vergleiche
     moves = 0  # Anzahl Vertauschungen
+    # Ausgabe-Stufen für den Parameter `verbose` der Sortierverfahren:
+    #   0 = keine Ausgabe, 1 = nur Summen (Tausche und Vergleiche), 2 = Summen und jeder einzelne Tausch
     distributions = 0  # Quicksort: Anzahl Verteilungen auf kleiner/gleich/grösser im letzten Aufruf (ohne Pivot-Wahl)
 
     @staticmethod
@@ -26,12 +28,13 @@ class Sorting:
         print("Permutation done = " + str(Sorting.moves))
 
     @staticmethod
-    def bubble_sort(list_of_elements, verbose=False):
+    def bubble_sort(list_of_elements, verbose=0):
         """Bubblesort: vergleicht benachbarte Elemente und tauscht sie bei falscher Reihenfolge.
 
         Wiederholt die Durchläufe, bis nichts mehr getauscht wird. Laufzeit im schlechtesten Fall O(n²).
-        Sortiert die übergebene Liste direkt und gibt sie zurück. Mit `verbose=True` wird jeder Tausch ausgegeben.
+        Sortiert die übergebene Liste direkt und gibt sie zurück. Ausgabe über `verbose`: 0 keine, 1 Summen, 2 auch jeder Tausch.
         """
+        Sorting._check_verbose(verbose)
         Sorting.tests = 0
         Sorting.moves = 0
         swapped = True
@@ -42,18 +45,19 @@ class Sorting:
                 if list_of_elements[element] > list_of_elements[element + 1]:
                     Sorting.moves += 1
                     swapped = True  # Zwei Elemente in falscher Reihenfolge gefunden
-                    GlobalLib.change_positions(list_of_elements, element, element+1, verbose)
-        if verbose:
+                    GlobalLib.change_positions(list_of_elements, element, element+1, verbose >= 2)
+        if verbose >= 1:
             Sorting._print_summary("Tausch", "Tausche", Sorting.moves, Sorting.tests)
         return list_of_elements
 
     @staticmethod
-    def shaker_sort(list_of_elements, verbose=False):
+    def shaker_sort(list_of_elements, verbose=0):
         """Shakersort (Cocktailsort): Bubblesort, der abwechselnd vorwärts und rückwärts durch die Liste läuft.
 
         Kleine Elemente am Listenende wandern dadurch schneller nach vorne. Laufzeit im schlechtesten Fall O(n²).
-        Sortiert die übergebene Liste direkt und gibt sie zurück. Mit `verbose=True` wird jeder Tausch ausgegeben.
+        Sortiert die übergebene Liste direkt und gibt sie zurück. Ausgabe über `verbose`: 0 keine, 1 Summen, 2 auch jeder Tausch.
         """
+        Sorting._check_verbose(verbose)
         Sorting.tests = 0
         Sorting.moves = 0
         swapped = True
@@ -66,32 +70,39 @@ class Sorting:
                     if list_of_elements[element] > list_of_elements[element + 1]:
                         Sorting.moves += 1
                         swapped = True  # Zwei Elemente in falscher Reihenfolge gefunden
-                        GlobalLib.change_positions(list_of_elements, element, element+1, verbose)
+                        GlobalLib.change_positions(list_of_elements, element, element+1, verbose >= 2)
                 if not swapped:
-                    if verbose:
+                    if verbose >= 1:
                         Sorting._print_summary("Tausch", "Tausche", Sorting.moves, Sorting.tests)
                     return list_of_elements
 
     @staticmethod
-    def quick_sort(arr, verbose=False):
+    def quick_sort(arr, verbose=0):
         """Quicksort: teilt die Liste um ein Pivot-Element in kleinere, gleiche und grössere Werte und sortiert die Teile rekursiv.
 
         Im Gegensatz zu den anderen Verfahren wird die Liste nicht verändert, sondern eine neue sortierte Liste
         zurückgegeben. Die Zähler werden nicht zurückgesetzt, dafür `reset_counters()` aufrufen.
         Laufzeit im Mittel O(n log n), im schlechtesten Fall O(n²).
-        Quicksort tauscht hier nicht, sondern verteilt die Werte auf drei Listen. Mit `verbose=True` wird jede Verteilung
-        ausgegeben (Wert, Pivot und Ziel-Liste), am Ende die Zahl der Verschiebungen dieses Aufrufs.
+        Quicksort tauscht hier nicht, sondern verteilt die Werte auf drei Listen. Ausgabe über `verbose`: 0 keine,
+        1 Summen (Verschiebungen und Vergleiche dieses Aufrufs), 2 auch jede einzelne Verteilung (Wert, Pivot, Ziel-Liste).
         """
+        Sorting._check_verbose(verbose)
         tests_before = Sorting.tests  # die Zähler laufen weiter, gezählt wird die Differenz
         Sorting.distributions = 0
         result = Sorting._quick_sort(arr, verbose)
-        if verbose:
+        if verbose >= 1:
             Sorting._print_summary("Verschiebung", "Verschiebungen", Sorting.distributions, Sorting.tests - tests_before)
         return result
 
     @staticmethod
+    def _check_verbose(verbose):
+        """Erlaubt sind 0, 1 und 2 (True zählt als 1, False als 0). Alles andere ist ein Fehler."""
+        if verbose not in (0, 1, 2):
+            raise ValueError(f"verbose muss 0, 1 oder 2 sein, nicht {verbose!r}")
+
+    @staticmethod
     def _print_summary(singular, plural, count, tests):
-        """Zusammenfassung am Ende eines Laufs mit verbose=True: wie viele Tausche/Verschiebungen und Vergleiche es gab."""
+        """Zusammenfassung am Ende eines Laufs ab verbose=1: wie viele Tausche/Verschiebungen und Vergleiche es gab."""
         print(f"Fertig: {count} {singular if count == 1 else plural}, {tests} Vergleiche")
 
     @staticmethod
@@ -119,7 +130,7 @@ class Sorting:
                     pivot_list.append(i)
                     target = "gleich"
                 Sorting.distributions += 1
-                if verbose:
+                if verbose >= 2:
                     print(f"Verschiebe {i} nach '{target}' (Pivot {pivot})")
             # Die beiden Teillisten rekursiv sortieren und zusammensetzen
             less = Sorting._quick_sort(less, verbose)

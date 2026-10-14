@@ -49,7 +49,7 @@ def test_sorted_list_needs_no_moves():
 @pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort])
 def test_verbose_prints_every_swap(algorithm, capsys):
     data = [3, 1, 2]
-    algorithm(data, verbose=True)
+    algorithm(data, verbose=2)
     lines = capsys.readouterr().out.strip().splitlines()
     swaps, summary = lines[:-1], lines[-1]
     assert len(swaps) == Sorting.moves == 2  # genau ein Ausdruck je Tausch
@@ -65,42 +65,97 @@ def test_not_verbose_prints_nothing(algorithm, capsys):
 
 
 def test_verbose_quick_sort_prints_each_distribution(capsys):
-    assert Sorting.quick_sort([3, 1, 2], verbose=True) == [1, 2, 3]
+    assert Sorting.quick_sort([3, 1, 2], verbose=2) == [1, 2, 3]
     out = capsys.readouterr().out
     assert "Verschiebe 1 nach 'kleiner' (Pivot 3)" in out
     assert "Verschiebe 3 nach 'gleich' (Pivot 3)" in out
 
 
 def test_verbose_gives_same_result_as_silent(capsys):
-    assert Sorting.bubble_sort([5, 2, 9, 1], verbose=True) == Sorting.bubble_sort([5, 2, 9, 1])
+    assert Sorting.bubble_sort([5, 2, 9, 1], verbose=2) == Sorting.bubble_sort([5, 2, 9, 1])
 
 
 @pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort])
 def test_verbose_summary_counts_swaps_and_tests(algorithm, capsys):
-    algorithm([5, 4, 3, 2, 1], verbose=True)
+    algorithm([5, 4, 3, 2, 1], verbose=2)
     summary = capsys.readouterr().out.strip().splitlines()[-1]
     assert summary == f"Fertig: {Sorting.moves} Tausche, {Sorting.tests} Vergleiche"
     assert Sorting.moves == 10  # umgekehrte Liste mit 5 Elementen braucht 10 Tausche
 
 
 def test_verbose_summary_singular_and_zero(capsys):
-    Sorting.bubble_sort([2, 1], verbose=True)
+    Sorting.bubble_sort([2, 1], verbose=2)
     assert "Fertig: 1 Tausch, " in capsys.readouterr().out
-    Sorting.shaker_sort([1, 2, 3], verbose=True)
+    Sorting.shaker_sort([1, 2, 3], verbose=2)
     assert "Fertig: 0 Tausche, " in capsys.readouterr().out
 
 
 def test_verbose_quick_sort_summary_matches_printed_lines(capsys):
     Sorting.reset_counters()
-    Sorting.quick_sort([3, 1, 2, 3], verbose=True)
+    Sorting.quick_sort([3, 1, 2, 3], verbose=2)
     lines = capsys.readouterr().out.strip().splitlines()
     distributions = [line for line in lines if line.startswith("Verschiebe ")]
     assert lines[-1].startswith(f"Fertig: {len(distributions)} Verschiebungen, ")  # Zahl stimmt mit den Zeilen überein
 
 
 def test_verbose_quick_sort_summary_counts_only_this_call(capsys):
-    Sorting.quick_sort([3, 1, 2], verbose=True)
+    Sorting.quick_sort([3, 1, 2], verbose=2)
     first = capsys.readouterr().out.strip().splitlines()[-1]
-    Sorting.quick_sort([3, 1, 2], verbose=True)  # Zähler wurden nicht zurückgesetzt, trotzdem gleiche Zusammenfassung
+    Sorting.quick_sort([3, 1, 2], verbose=2)  # Zähler wurden nicht zurückgesetzt, trotzdem gleiche Zusammenfassung
     second = capsys.readouterr().out.strip().splitlines()[-1]
     assert first == second
+
+
+# ---------------------------------------------------------------- Ausgabe-Stufen (verbose 0, 1, 2)
+
+
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort])
+def test_level_0_prints_nothing(algorithm, capsys):
+    algorithm([3, 1, 2], verbose=0)
+    assert capsys.readouterr().out == ""
+
+
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort])
+def test_level_1_prints_only_the_summary(algorithm, capsys):
+    algorithm([3, 1, 2], verbose=1)
+    lines = capsys.readouterr().out.strip().splitlines()
+    assert lines[0].startswith("Fertig: 2 Tausche, ")
+    assert len(lines) == 1  # kein einzelner Tausch
+
+
+def test_level_1_quick_sort_prints_only_the_summary(capsys):
+    Sorting.quick_sort([3, 1, 2], verbose=1)
+    lines = capsys.readouterr().out.strip().splitlines()
+    assert len(lines) == 1
+    assert lines[0].startswith("Fertig: ")
+
+
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort])
+def test_level_2_prints_details_and_summary(algorithm, capsys):
+    algorithm([3, 1, 2], verbose=2)
+    lines = capsys.readouterr().out.strip().splitlines()
+    assert len(lines) > 1
+    assert lines[-1].startswith("Fertig: ")
+
+
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort])
+def test_level_2_output_contains_level_1_output(algorithm, capsys):
+    algorithm([5, 2, 4, 1], verbose=1)
+    summary = capsys.readouterr().out.strip()
+    algorithm([5, 2, 4, 1], verbose=2)
+    detailed = capsys.readouterr().out.strip().splitlines()
+    assert detailed[-1] == summary  # Stufe 2 endet mit der Zusammenfassung von Stufe 1
+
+
+def test_true_counts_as_level_1_and_false_as_level_0(capsys):
+    Sorting.bubble_sort([2, 1], verbose=True)
+    assert capsys.readouterr().out.strip().splitlines() == ["Fertig: 1 Tausch, 2 Vergleiche"]
+    Sorting.bubble_sort([2, 1], verbose=False)
+    assert capsys.readouterr().out == ""
+
+
+@pytest.mark.parametrize("algorithm", [Sorting.bubble_sort, Sorting.shaker_sort, Sorting.quick_sort])
+@pytest.mark.parametrize("level", [3, -1, "2", None])
+def test_invalid_level_raises(algorithm, level):
+    with pytest.raises(ValueError):
+        algorithm([2, 1], verbose=level)

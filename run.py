@@ -1,4 +1,8 @@
-"""Demo-Skript: führt Bubblesort und Shakersort auf einer zufälligen, einer sortierten und einer umgekehrten Liste aus."""
+"""Demo-Skript: führt Bubblesort, Shakersort und Quicksort (neue Liste und In-Place) auf einer zufälligen, einer sortierten und einer umgekehrten Liste aus.
+
+Alle Aufrufe laufen mit `verbose=1`: am Ende jedes Laufs werden die Summen (Tausche bzw. Verschiebungen und Vergleiche) ausgegeben.
+(`verbose=2` zeigt zusätzlich jeden einzelnen Tausch, `verbose=0` gibt nichts aus.)
+"""
 # from global_lib import *
 from global_lib import GlobalLib
 from sort import Sorting
@@ -18,27 +22,59 @@ GlobalLib.print_empty_lines(2)
 GlobalLib.print_title("BubbleSort", 1)
 print("Pseudo Random")
 List_to_sort = list(list_of_elements)  # Kopie, damit die Originalliste unverändert bleibt
-print(Sorting.bubble_sort(List_to_sort))
+print(Sorting.bubble_sort(List_to_sort, verbose=1))
 
 print("Sorted")
 List_to_sort = list(list_of_elements_sorted)
-print(Sorting.bubble_sort(List_to_sort))
+print(Sorting.bubble_sort(List_to_sort, verbose=1))
 
 print("Reversed")
 List_to_sort = list(list_of_elements_reversed)
-print(Sorting.bubble_sort(List_to_sort))
+print(Sorting.bubble_sort(List_to_sort, verbose=1))
 
 # Shakersort
 GlobalLib.print_title("Shakersort", 1)
 
 print("Random")
 List_to_sort = list(list_of_elements)
-print(Sorting.shaker_sort(List_to_sort))
+print(Sorting.shaker_sort(List_to_sort, verbose=1))
 
 print("Sorted")
 List_to_sort = list(list_of_elements_sorted)
-print(Sorting.shaker_sort(List_to_sort))
+print(Sorting.shaker_sort(List_to_sort, verbose=1))
 
 print("Reversed")
 List_to_sort = list(list_of_elements_reversed)
-print(Sorting.shaker_sort(List_to_sort))
+print(Sorting.shaker_sort(List_to_sort, verbose=1))
+
+
+# Quicksort (gibt eine neue sortierte Liste zurück, die Originalliste bleibt unverändert)
+GlobalLib.print_title("Quicksort", 1)
+
+print("Pseudo Random")
+List_to_sort = list(list_of_elements)
+print(Sorting.quick_sort(List_to_sort, verbose=1))
+
+print("Sorted")
+List_to_sort = list(list_of_elements_sorted)
+print(Sorting.quick_sort(List_to_sort, verbose=1))
+
+print("Reversed")
+List_to_sort = list(list_of_elements_reversed)
+print(Sorting.quick_sort(List_to_sort, verbose=1))
+
+
+# Quicksort In-Place (tauscht in der übergebenen Liste wie Bubble- und Shakersort)
+GlobalLib.print_title("Quicksort In-Place", 1)
+
+print("Pseudo Random")
+List_to_sort = list(list_of_elements)
+print(Sorting.quick_sort_in_place(List_to_sort, verbose=1))
+
+print("Sorted")
+List_to_sort = list(list_of_elements_sorted)
+print(Sorting.quick_sort_in_place(List_to_sort, verbose=1))
+
+print("Reversed")
+List_to_sort = list(list_of_elements_reversed)
+print(Sorting.quick_sort_in_place(List_to_sort, verbose=1))

@@ -22,28 +22,36 @@ PALETTE = {
     "y": (252, 214, 50),   # gelb
     "o": (200, 140, 20),   # orange (Münzrand)
     "m": (160, 96, 48),    # Pilzbraun
+    "h": (128, 78, 40),    # Hut (Abenteurer-Hut)
+    "H": (60, 34, 18),     # Hutband
+    "l": (236, 176, 64),   # blonde Haare
+    "t": (96, 140, 200),   # Hemd (hellblau)
+    "p": (170, 124, 70),   # Hose (Khaki)
+    "u": (58, 36, 24),     # Stiefel und Gürtel
 }
 
-# Die Figur schaut nach rechts und hält die Waffe vorne (Zeile 7). Die Beine (Zeilen 12 bis 15) unterscheiden sich je Bild.
+# Abenteurer im Stil von Rick Dangerous: Hut mit breiter Krempe, blonde Haare, hellblaues Hemd, Khakihose, Stiefel
+# und eine Pistole. Die Figur schaut nach rechts und hält die Waffe vorne (Zeile 7). Die Beine (Zeilen 12 bis 15)
+# unterscheiden sich je Bild.
 PLAYER_BODY = [
-    "...rrrrr....",
-    "..rrrrrrrr..",
-    "..kkssssks..",
-    ".kssssssss..",
-    "..ssskkkss..",
-    "...rrrrrr...",
-    "..rrbrrbrr..",
-    "..rrbbbbrrgg",
-    "..sbbbbbbs..",
-    "...bbbbbb...",
-    "...bbbbbb...",
-    "...bbbbbb...",
+    "....hhhh....",
+    "...hhhhhh...",
+    "...HHHHHH...",
+    ".hhhhhhhhhh.",
+    "...lssssss..",
+    "...lssssks..",
+    "....sssss...",
+    "..tttttttsgg",
+    "..sttttttt..",
+    "...tttttt...",
+    "...uuuuuu...",
+    "...pppppp...",
 ]
 PLAYER_LEGS = {
-    "idle": ["..bb..bb....", "..bb..bb....", "..nn..nn....", ".nnn..nnn..."],
-    "run1": ["..bb...bb...", "..bb....bb..", "..nn....nn..", ".nnn...nnn.."],
-    "run2": ["...bb.bb....", "....bbb.....", "....nnn.....", "...nnnnn...."],
-    "jump": ["..bb...bb...", ".bb.....bb..", ".nn.....nn..", "............"],
+    "idle": ["..pp..pp....", "..pp..pp....", "..uu..uu....", ".uuu..uuu..."],
+    "run1": ["..pp...pp...", "..pp....pp..", "..uu....uu..", ".uuu...uuu.."],
+    "run2": ["...pp.pp....", "....ppp.....", "....uuu.....", "...uuuuu...."],
+    "jump": ["..pp...pp...", ".pp.....pp..", ".uu.....uu..", "............"],
 }
 
 ENEMY_HEAD = [

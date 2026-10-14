@@ -36,8 +36,9 @@ class Game:
         self.window = pygame.display.set_mode((SCREEN_W * SCALE, SCREEN_H * SCALE))
         self.canvas = pygame.Surface((SCREEN_W, SCREEN_H))  # hier wird klein gezeichnet, dann vergrössert
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.Font(None, 16)
-        self.big_font = pygame.font.Font(None, 28)
+        # Schrift wird erst nach dem Vergrössern in voller Fensterauflösung gezeichnet: glatt und gut lesbar
+        self.font = self.load_font(7 * SCALE)
+        self.big_font = self.load_font(18 * SCALE)
 
         self.background = Background()
         self.tiles = make_tiles()
@@ -168,10 +169,10 @@ class Game:
         self.background.draw(self.canvas, cam)
         self.draw_tiles(cam)
         self.draw_objects(cam)
-        self.draw_hud()
+        pygame.transform.scale(self.canvas, self.window.get_size(), self.window)  # ohne Glättung = pixelig
+        self.draw_hud()  # Text kommt erst danach, damit er nicht mit vergrössert und verpixelt wird
         if self.state != PLAYING:
             self.draw_message()
-        pygame.transform.scale(self.canvas, self.window.get_size(), self.window)  # ohne Glättung = pixelig
         pygame.display.flip()
 
     def draw_tiles(self, cam):
@@ -206,21 +207,30 @@ class Game:
             image = self.player_sprites.get(player.facing, player.sprite_state)
             self.canvas.blit(image, (player.rect.x - cam, player.rect.y))
 
-    def draw_text(self, font, text, x, y, color=(255, 255, 255), center=False):
-        shadow = font.render(text, False, (30, 30, 50))
-        image = font.render(text, False, color)
-        if center:
-            x -= image.get_width() // 2
-        self.canvas.blit(shadow, (x + 1, y + 1))
-        self.canvas.blit(image, (x, y))
+    @staticmethod
+    def load_font(size):
+        """Glatte, gut lesbare Systemschrift (fett). Fehlt sie, nimmt pygame seine Standardschrift."""
+        return pygame.font.SysFont("segoeui,arial,verdana,dejavusans", size, bold=True)
+
+    def draw_text(self, font, text, x, y, color=(255, 255, 255), align="left"):
+        """Zeichnet Text mit dunklem Schatten direkt ins Fenster. x und y sind Punkte der kleinen Spielfläche."""
+        image = font.render(text, True, color)  # True = geglättete Kanten
+        shadow = font.render(text, True, (20, 24, 48))
+        px, py = x * SCALE, y * SCALE
+        if align == "center":
+            px -= image.get_width() // 2
+        elif align == "right":
+            px -= image.get_width()
+        self.window.blit(shadow, (px + 2, py + 2))
+        self.window.blit(image, (px, py))
 
     def draw_hud(self):
-        self.draw_text(self.font, f"PUNKTE {self.score:05d}", 6, 5)
-        self.draw_text(self.font, f"LEBEN {max(self.lives, 0)}", SCREEN_W - 56, 5)
+        self.draw_text(self.font, f"PUNKTE  {self.score:05d}", 6, 2)
+        self.draw_text(self.font, f"LEBEN  {max(self.lives, 0)}", SCREEN_W - 6, 2, align="right")
 
     def draw_message(self):
         title = "GESCHAFFT!" if self.state == WON else "GAME OVER"
         color = (252, 214, 50) if self.state == WON else (240, 80, 80)
-        self.draw_text(self.big_font, title, SCREEN_W // 2, 60, color, center=True)
-        self.draw_text(self.font, f"PUNKTE {self.score}", SCREEN_W // 2, 88, center=True)
-        self.draw_text(self.font, "R = NOCHMAL    ESC = ENDE", SCREEN_W // 2, 104, center=True)
+        self.draw_text(self.big_font, title, SCREEN_W // 2, 50, color, align="center")
+        self.draw_text(self.font, f"PUNKTE  {self.score}", SCREEN_W // 2, 88, align="center")
+        self.draw_text(self.font, "R = Nochmal      Esc = Ende", SCREEN_W // 2, 104, align="center")

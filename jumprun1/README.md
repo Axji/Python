@@ -74,3 +74,15 @@ werte in `constants.py`, schlagen die Tests `test_reach_table_*` an: dann die Ta
 - Die Fragezeichen-Blöcke geben nur Münzen her, keine anderen Überraschungen (Pilz, Waffen-Upgrade ...).
 - Nur ein Gegnertyp, keine Gegner, die zurückschiessen.
 - Kein Ton, kein Titelbildschirm.
+
+## Als .exe bauen (Windows)
+
+Mit PyInstaller entsteht eine einzelne `JumpRun.exe`, die ohne installiertes Python läuft. Im Ordner `C:\dev\python`:
+
+```bash
+.\venv\Scripts\python.exe -m pip install pyinstaller
+.\venv\Scripts\pyinstaller.exe JumpRun.spec
+```
+
+Die fertige Datei liegt danach in `dist\JumpRun.exe`. Die Einstellungen (ohne Konsolenfenster, eine einzelne Datei) stehen in
+`JumpRun.spec`. Die Ordner `build/` und `dist/` sind in der `.gitignore`, die `.exe` kommt also nicht ins Repository.

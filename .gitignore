@@ -65,3 +65,7 @@ CarRace/brains/
 
 # Wetterdaten werden von GetWeatherData.py neu geladen
 Weather/daten/
+
+# PyInstaller: erzeugte .exe und Zwischendateien (JumpRun.spec bleibt im Repo)
+build/
+dist/

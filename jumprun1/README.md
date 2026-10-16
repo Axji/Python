@@ -19,7 +19,9 @@ Voraussetzung: `pip install -r requirements.txt` (pygame-ce).
 | Pfeil links/rechts oder A/D | laufen |
 | Leertaste, Pfeil hoch oder W | springen (länger gedrückt = höher). **Doppelsprung:** in der Luft noch einmal drücken, danach erst landen |
 | X, J oder Strg | **geradeaus nach vorne schiessen** (gedrückt halten = Dauerfeuer) |
-| R | nach Spielende neu starten |
+| R | **Reset 1:** aktuelles Level neu starten, mit 3 Leben und 0 Punkten (jederzeit) |
+| N | **Reset 2:** neues Spiel ab Level 1, mit 3 Leben und 0 Punkten (jederzeit) |
+| Enter | nach einem geschafften Level: weiter zum nächsten |
 | Esc | beenden |
 
 ## Spielregeln

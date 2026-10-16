@@ -7,7 +7,9 @@ Steuerung:
     Pfeil links/rechts oder A/D   laufen
     Leertaste, Pfeil hoch oder W   springen (länger drücken = höher)
     X, J oder Strg                 schiessen, geradeaus nach vorne (gedrückt halten = Dauerfeuer)
-    R                              nach Spielende von vorne beginnen
+    R                              aktuelles Level neu starten (3 Leben, 0 Punkte), jederzeit
+    N                              neues Spiel ab Level 1 (3 Leben, 0 Punkte), jederzeit
+    Enter                          nach einem geschafften Level: das nächste Level
     Esc                            beenden
 
 Ziel: bis zur Fahne am Ende kommen. Gegner lassen sich abschiessen oder von oben anspringen.

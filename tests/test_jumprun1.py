@@ -459,10 +459,89 @@ def test_game_continues_with_generated_levels_and_keeps_score_and_lives():
     assert game.level_number == 3 and game.level.cols == 2 * LEVEL_WIDTH
 
 
-def test_restart_after_game_over_goes_back_to_level_one():
+def press(game, key):
+    """Simuliert einen Tastendruck und lässt das Spiel ihn verarbeiten."""
+    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=key))
+    game.handle_events()
+
+
+# ---------------------------------------------------------------- Zwei Resets: R = Level neu, N = neues Spiel
+
+
+def test_r_restarts_current_level_with_full_lives_and_no_points():
     game = Game()
     game.next_level()
+    game.next_level()  # Level 3
+    game.score, game.lives = 480, 1
+    press(game, pygame.K_r)
+    assert game.level_number == 3  # bleibt im selben Level
+    assert (game.score, game.lives) == (0, 3)
+    assert game.state == "playing"
+
+
+def test_r_gives_the_same_generated_level_again():
+    game = Game()
+    game.next_level()
+    before = [row[:] for row in game.level.grid]
+    press(game, pygame.K_r)
+    assert game.level.grid == before  # gleicher Plan, nicht ein neuer
+
+
+def test_r_resets_blocks_coins_and_enemies_of_the_level():
+    game = Game()
+    col, row = next(iter(game.level.block_coins))
+    game.level.hit_block(col, row)
+    game.coins.clear()
+    game.enemies.clear()
+    press(game, pygame.K_r)
+    assert game.level.block_coins[(col, row)] == BLOCK_COINS
+    assert game.coins and game.enemies
+
+
+def test_r_works_in_the_middle_of_the_game_and_after_game_over():
+    game = Game()
+    game.score, game.lives = 100, 2
+    press(game, pygame.K_r)  # mitten im Spiel
+    assert (game.score, game.lives, game.state) == (0, 3, "playing")
+    game.next_level()
+    game.state, game.lives = "game over", 0
+    press(game, pygame.K_r)
+    assert (game.level_number, game.score, game.lives, game.state) == (2, 0, 3, "playing")
+
+
+def test_n_starts_a_new_game_from_level_one():
+    game = Game()
+    game.next_level()
+    game.next_level()
+    game.score, game.lives = 300, 1
+    press(game, pygame.K_n)
+    assert game.level_number == 1
+    assert (game.score, game.lives, game.state) == (0, 3, "playing")
+
+
+def test_n_creates_new_levels_for_the_next_run():
+    game = Game()
+    seeds = set()
+    for _ in range(5):
+        press(game, pygame.K_n)
+        seeds.add(game.seed)
+    assert len(seeds) > 1  # jedes neue Spiel bekommt einen neuen Zufallswert
+
+
+def test_enter_only_continues_after_a_won_level():
+    game = Game()
+    press(game, pygame.K_RETURN)
+    assert game.level_number == 1  # mitten im Spiel passiert nichts
+    game.state = "won"
+    press(game, pygame.K_RETURN)
+    assert game.level_number == 2
     game.state = "game over"
-    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_r))
-    game.handle_events()
-    assert game.level_number == 1 and game.score == 0 and game.lives == 3
+    press(game, pygame.K_RETURN)
+    assert game.level_number == 2 and game.state == "game over"
+
+
+def test_r_after_winning_repeats_the_level_instead_of_continuing():
+    game = Game()
+    game.score, game.state = 200, "won"
+    press(game, pygame.K_r)
+    assert (game.level_number, game.score, game.state) == (1, 0, "playing")

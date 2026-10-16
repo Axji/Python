@@ -53,11 +53,17 @@ class Game:
         self.reset()
 
     def reset(self):
-        """Startet das Spiel von vorne: Level 1, neue Punkte und Leben, neuer Zufallswert für die späteren Level."""
+        """Reset 2: Neues Spiel ab Level 1, mit 3 Leben und 0 Punkten und neuem Zufallswert für die späteren Level."""
         self.seed = random.randrange(1_000_000)
         self.score = 0
         self.lives = START_LIVES
         self.start_level(1)
+
+    def restart_level(self):
+        """Reset 1: Das aktuelle Level von vorne, mit 3 Leben und 0 Punkten. Es sieht gleich aus wie vorher."""
+        self.score = 0
+        self.lives = START_LIVES
+        self.start_level(self.level_number)
 
     def next_level(self):
         """Weiter zum nächsten, frisch erzeugten Level. Punkte und Leben bleiben."""
@@ -96,10 +102,13 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return False
-                if self.state == WON and event.key in (pygame.K_r, pygame.K_RETURN):
-                    self.next_level()
-                elif self.state != PLAYING and event.key in (pygame.K_r, pygame.K_RETURN):
+                if event.key == pygame.K_r:
+                    self.restart_level()  # gilt jederzeit, auch mitten im Spiel
+                elif event.key == pygame.K_n:
                     self.reset()
+                elif event.key == pygame.K_RETURN:
+                    if self.state == WON:
+                        self.next_level()
                 elif event.key in JUMP_KEYS:
                     self.player.request_jump()
                 elif event.key in SHOOT_KEYS:
@@ -280,5 +289,9 @@ class Game:
         color = (252, 214, 50) if self.state == WON else (240, 80, 80)
         self.draw_text(self.big_font, title, SCREEN_W // 2, 50, color, align="center")
         self.draw_text(self.font, f"PUNKTE  {self.score}", SCREEN_W // 2, 88, align="center")
-        hint = "Enter = Nächstes Level      Esc = Ende" if self.state == WON else "R = Nochmal      Esc = Ende"
-        self.draw_text(self.font, hint, SCREEN_W // 2, 104, align="center")
+        if self.state == WON:
+            hints = ["Enter = Nächstes Level", "R = Dieses Level neu      N = Neues Spiel      Esc = Ende"]
+        else:
+            hints = ["R = Dieses Level neu (3 Leben, 0 Punkte)", "N = Neues Spiel ab Level 1      Esc = Ende"]
+        for line, hint in enumerate(hints):
+            self.draw_text(self.font, hint, SCREEN_W // 2, 104 + line * 12, align="center")

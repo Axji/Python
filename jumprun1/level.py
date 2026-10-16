@@ -65,9 +65,11 @@ def build_grid():
 class Level:
     """Hält das Raster und liefert Kollisionsflächen sowie Startpunkte."""
 
-    def __init__(self):
-        self.grid = build_grid()
-        self.width = LEVEL_WIDTH * TILE
+    def __init__(self, grid=None):
+        """Ohne Angabe entsteht der handgebaute erste Plan; sonst wird das übergebene Raster (Liste von Zeilen) benutzt."""
+        self.grid = build_grid() if grid is None else [list(row) for row in grid]
+        self.cols = len(self.grid[0])  # Breite in Kacheln
+        self.width = self.cols * TILE
         self.height = LEVEL_HEIGHT * TILE + Y_OFFSET
         self.player_start = (0, 0)
         self.enemy_starts = []
@@ -118,7 +120,7 @@ class Level:
 
     def char_at(self, col, row):
         """Kachelzeichen an Spalte/Zeile. Links und rechts ist der Plan von Wänden begrenzt, oben und unten offen."""
-        if col < 0 or col >= LEVEL_WIDTH:
+        if col < 0 or col >= self.cols:
             return "#"
         if row < 0 or row >= LEVEL_HEIGHT:
             return "."

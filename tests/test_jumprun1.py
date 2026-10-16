@@ -310,3 +310,159 @@ def test_jumping_against_brick_gives_nothing(monkeypatch):
     brick_col = next(c for c in range(8, 12) if game.level.char_at(c, 6) == "B")
     _jump_under(game, monkeypatch, brick_col, 6)
     assert game.score == 0
+
+
+# ---------------------------------------------------------------- Level-Generator (ab Level 2)
+
+from jumprun1 import reach  # noqa: E402
+from jumprun1.levelgen import DELAYED_GAPS, GENERATED_WIDTH, KINDS, REACH, generate_grid, plan, profile, required  # noqa: E402
+
+SEEDS = range(40)
+
+
+def test_generated_level_is_twice_as_long_as_level_one():
+    assert GENERATED_WIDTH == 2 * LEVEL_WIDTH
+    for seed in range(5):
+        level = Level(generate_grid(seed, 2))
+        assert level.cols == 2 * LEVEL_WIDTH
+        assert level.width == 2 * Level().width
+        assert len(level.grid) == LEVEL_HEIGHT
+        assert level.flag_rect.width > 0 and level.enemy_starts and level.coins
+        assert level.player_start[0] < level.flag_rect.x
+
+
+def test_generator_is_deterministic_and_varies_with_seed():
+    assert generate_grid(7, 2) == generate_grid(7, 2)
+    assert generate_grid(7, 2) != generate_grid(8, 2)
+    assert generate_grid(7, 2) != generate_grid(7, 3)
+
+
+def test_generated_start_and_goal_stand_on_solid_ground():
+    for seed in SEEDS:
+        grid = generate_grid(seed, 2)
+        assert sum(row.count("P") for row in grid) == 1
+        assert sum(row.count("F") for row in grid) == 1
+        row = next(r for r, line in enumerate(grid) if "P" in line)
+        assert grid[row + 1][grid[row].index("P")] == "#"
+        row = next(r for r, line in enumerate(grid) if "F" in line)
+        assert grid[row + 1][grid[row].index("F")] == "#"
+
+
+def test_no_gap_or_step_is_beyond_the_double_jump():
+    for number in (2, 3, 5):
+        for seed in SEEDS:
+            for gap, rise in profile(generate_grid(seed, number)):
+                assert rise in REACH, (seed, gap, rise)
+                assert 0 <= gap <= REACH[rise][0][2], (seed, number, gap, rise)
+                if gap == 0 and rise > 0:
+                    assert REACH[rise][0][1] >= 0  # eine Mauer dieser Höhe lässt sich überhaupt erklimmen
+
+
+def needs_double(step):
+    """Geht dieses Hindernis nicht mit dem Einzelsprung (zu breit oder zu hoch)?"""
+    return step.gap > REACH[step.rise][0][0]
+
+
+def test_generated_levels_have_gaps_and_walls_a_single_jump_cannot_do():
+    for number in (2, 3, 6):
+        for seed in SEEDS:
+            steps, _ = plan(seed, number)
+            assert set(required(number)) <= {s.kind for s in steps}
+            assert any(s.kind == "double_gap" and needs_double(s) for s in steps)
+            assert any(s.kind == "wall_double" and needs_double(s) for s in steps)
+            assert all(s.gap <= REACH[s.rise][0][2] for s in steps)
+            assert any(not needs_double(s) for s in steps)  # und auch leichte Stellen
+            if number >= 3:  # Drops mit verzögertem Doppelsprung
+                assert any(s.kind == "delayed_drop" and s.rise < 0 and s.gap > REACH[s.rise][0][1] for s in steps)
+
+
+def hard_share(number):
+    steps = [s for seed in SEEDS for s in plan(seed, number)[0]]
+    return sum(needs_double(s) for s in steps) / len(steps)
+
+
+def test_level_two_is_mild_and_difficulty_rises_with_the_level():
+    assert hard_share(2) < 0.4          # die Mehrheit geht mit dem Einzelsprung
+    assert hard_share(2) > 0.1          # ein Teil braucht aber den Doppelsprung
+    assert hard_share(2) < hard_share(5) < hard_share(10)
+
+
+def average_gap(number):
+    gaps = [s.gap for seed in SEEDS for s in plan(seed, number)[0] if s.kind in ("single_gap", "double_gap")]
+    return sum(gaps) / len(gaps)
+
+
+def test_gaps_get_wider_with_the_level():
+    assert average_gap(2) < average_gap(10)
+
+
+def test_generated_terrain_matches_the_plan():
+    for seed in range(10):
+        steps, _ = plan(seed, 2)
+        found = profile(generate_grid(seed, 2))
+        assert found[: len(steps)] == [(s.gap, s.rise) for s in steps]
+
+
+def test_generated_level_has_no_blocks_near_platform_edges():
+    """Ziegel und Blöcke hängen weit weg von den Kanten, damit sie keinen Absprung oder Sprung behindern."""
+    for seed in SEEDS:
+        grid = generate_grid(seed, 2)
+        for r, line in enumerate(grid):
+            for c, char in enumerate(line):
+                if char in "B?":
+                    ground = next(rr for rr in range(r, LEVEL_HEIGHT) if grid[rr][c] == "#")
+                    for dc in range(-3, 4):
+                        assert grid[ground][c + dc] == "#" and grid[ground - 1][c + dc] != "#", (seed, r, c)
+
+
+@pytest.mark.parametrize("rise", sorted(REACH))
+def test_reach_table_single_jump_limit_matches_physics(rise):
+    single_abs, _, _ = REACH[rise][0]
+    assert reach.can_cross(single_abs, rise, "single") if single_abs >= 0 else not reach.can_cross(0, rise, "single")
+    assert not reach.can_cross(single_abs + 1, rise, "single")
+
+
+@pytest.mark.parametrize("rise", sorted(REACH))
+def test_reach_table_double_jump_is_doable_within_the_comfort_limit(rise):
+    _, early_c, double_c = REACH[rise][1]
+    assert reach.can_cross(early_c, rise, "early")
+    assert reach.can_cross(double_c, rise, "double")
+    assert reach.can_cross(REACH[rise][0][2], rise, "double")
+
+
+@pytest.mark.parametrize("rise", sorted(DELAYED_GAPS))
+def test_delayed_drops_need_the_late_double_jump(rise):
+    for gap in DELAYED_GAPS[rise]:
+        assert not reach.can_cross(gap, rise, "early")   # mit dem zweiten Sprung im höchsten Punkt reicht es nicht
+        assert reach.can_cross(gap, rise, "double")      # verzögert im Fallen schon
+
+
+def test_every_gap_in_generated_levels_is_doable_in_the_real_physics():
+    pairs = {p for seed in range(3) for p in profile(generate_grid(seed, 2))}
+    for gap, rise in sorted(pairs):
+        assert reach.can_cross(gap, rise, "double"), (gap, rise)
+        if gap > REACH[rise][0][0]:
+            assert not reach.can_cross(gap, rise, "single"), (gap, rise)
+
+
+def test_game_continues_with_generated_levels_and_keeps_score_and_lives():
+    game = Game()
+    assert game.level_number == 1 and game.level.cols == LEVEL_WIDTH
+    game.score, game.lives = 450, 2
+    game.state = "won"
+    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN))
+    game.handle_events()
+    assert game.level_number == 2 and game.state == "playing"
+    assert game.level.cols == 2 * LEVEL_WIDTH
+    assert (game.score, game.lives) == (450, 2)
+    game.next_level()
+    assert game.level_number == 3 and game.level.cols == 2 * LEVEL_WIDTH
+
+
+def test_restart_after_game_over_goes_back_to_level_one():
+    game = Game()
+    game.next_level()
+    game.state = "game over"
+    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_r))
+    game.handle_events()
+    assert game.level_number == 1 and game.score == 0 and game.lives == 3

@@ -24,6 +24,7 @@ Voraussetzung: `pip install -r requirements.txt` (pygame-ce).
 
 ## Spielregeln
 
+- Nach Level 1 folgen endlos neue, zufällig erzeugte Level (Enter nach dem Ziel). Punkte und Leben bleiben; nach Game Over beginnt das Spiel wieder bei Level 1.
 - Ziel ist die Fahne am Ende des Plans (die Zielzone reicht bis zum oberen Rand, man kann sie nicht überspringen).
 - Münzen geben 10 Punkte. **Fragezeichen-Blöcke:** von unten anspringen, dann fällt eine Münze heraus (10 Punkte, 3 Münzen je Block, danach ist der Block leer). Gegner lassen sich abschiessen (100 Punkte) oder von oben anspringen (200 Punkte).
 - Ein Treffer von der Seite oder ein Sturz in ein Loch kostet ein Leben (3 Leben). Nach einem Treffer ist die Figur kurz geschützt.
@@ -35,11 +36,28 @@ Voraussetzung: `pip install -r requirements.txt` (pygame-ce).
 | `main.py` | Startpunkt |
 | `game.py` | Spielschleife, Regeln, Kamera, Zeichnen |
 | `entities.py` | Spielfigur (Laufen, Springen, Schiessen), Gegner, Kugeln und die gemeinsame Kollisionsphysik |
-| `level.py` | Der Spielplan als Raster (`build_grid()`), Kollisionsflächen und Startpunkte |
+| `level.py` | Der Spielplan von Level 1 als Raster (`build_grid()`), Kollisionsflächen und Startpunkte |
+| `levelgen.py` | Zufälliger Level-Generator für Level 2 und alle weiteren (siehe unten) |
+| `reach.py` | Misst mit der echten Physik, wie weit und hoch Einzel- und Doppelsprung kommen |
 | `pixelart.py` | Textbilder der Figuren, Kacheln und der scrollende Hintergrund |
 | `constants.py` | Alle Zahlenwerte (Tempo, Sprunghöhe, Schussabstand, Leben ...) |
 
 Die Tests liegen in `tests/test_jumprun1.py` (laufen ohne Fenster).
+
+## Level-Generator
+
+Level 2, 3, ... entstehen aus einem Zufallswert (pro Spiel neu) in `levelgen.generate_grid(seed, number)`. Jedes ist
+**doppelt so lang wie Level 1** (160 Spalten). Garantien, die in `tests/test_jumprun1.py` geprüft werden:
+
+- Die Schwierigkeit steigt mit dem Level (bis Level 10): In Level 2 gehen rund 70 % der Hindernisse mit dem Einzelsprung, in Level 10 nur noch rund 20 %, und die Lücken werden breiter. Drops mit verzögertem Doppelsprung gibt es ab Level 3.
+- Keine Lücke und keine Stufe ist grösser, als der Doppelsprung schafft.
+- Es gibt Lücken und Mauern, die der Einzelsprung nicht schafft (Doppelsprung nötig), daneben auch leichte Stellen.
+- Es gibt **Drops**: eine tiefer liegende Landung hinter einer sehr breiten Lücke. Dort reicht der zweite Sprung im höchsten
+  Punkt nicht, man muss ihn **verzögert im Fallen** auslösen, um die Strecke maximal auszunutzen.
+- Ziegel und Blöcke liegen weit weg von den Plattformkanten und behindern keinen Absprung.
+
+Die Reichweiten stehen in `levelgen.REACH` und wurden mit `reach.py` an der echten Physik gemessen. Ändert man die Sprung-
+werte in `constants.py`, schlagen die Tests `test_reach_table_*` an: dann die Tabelle neu messen (`reach.max_gap`).
 
 ## Anpassen
 
@@ -53,4 +71,4 @@ Die Tests liegen in `tests/test_jumprun1.py` (laufen ohne Fenster).
 
 - Die Fragezeichen-Blöcke geben nur Münzen her, keine anderen Überraschungen (Pilz, Waffen-Upgrade ...).
 - Nur ein Gegnertyp, keine Gegner, die zurückschiessen.
-- Kein Ton, kein Titelbildschirm, nur ein Plan.
+- Kein Ton, kein Titelbildschirm.

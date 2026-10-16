@@ -1,5 +1,6 @@
 """Spielschleife, Regeln (Münzen, Gegner, Leben, Ziel), Kamera und Zeichnen."""
 import math
+import random
 
 import pygame
 
@@ -18,6 +19,7 @@ from .constants import (
 )
 from .entities import CoinPop, Enemy, Player
 from .level import Y_OFFSET, Level
+from .levelgen import generate_grid
 from .pixelart import Background, PlayerSprites, bullet_sprites, coin_sprite, enemy_frames, flag_sprite, make_tiles
 
 LEFT_KEYS = (pygame.K_LEFT, pygame.K_a)
@@ -51,16 +53,26 @@ class Game:
         self.reset()
 
     def reset(self):
-        """Startet das Spiel von vorne."""
-        self.level = Level()
+        """Startet das Spiel von vorne: Level 1, neue Punkte und Leben, neuer Zufallswert für die späteren Level."""
+        self.seed = random.randrange(1_000_000)
+        self.score = 0
+        self.lives = START_LIVES
+        self.start_level(1)
+
+    def next_level(self):
+        """Weiter zum nächsten, frisch erzeugten Level. Punkte und Leben bleiben."""
+        self.start_level(self.level_number + 1)
+
+    def start_level(self, number):
+        """Baut Level `number` auf: das erste ist von Hand gebaut, alle weiteren kommen aus dem Level-Generator."""
+        self.level_number = number
+        self.level = Level() if number == 1 else Level(generate_grid(self.seed, number))
         self.player = Player(*self.level.player_start)
         self.enemies = [Enemy(x, y) for x, y in self.level.enemy_starts]
         self.coins = [coin.copy() for coin in self.level.coins]
         self.bullets = []
         self.coin_pops = []   # Münzen, die gerade aus einem Block springen
         self.bumps = {}       # (Spalte, Zeile) eines getroffenen Blocks -> Restzeit seines Hüpfers
-        self.score = 0
-        self.lives = START_LIVES
         self.state = PLAYING
         self.camera_x = 0
         self.ticks = 0
@@ -84,7 +96,9 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return False
-                if self.state != PLAYING and event.key in (pygame.K_r, pygame.K_RETURN):
+                if self.state == WON and event.key in (pygame.K_r, pygame.K_RETURN):
+                    self.next_level()
+                elif self.state != PLAYING and event.key in (pygame.K_r, pygame.K_RETURN):
                     self.reset()
                 elif event.key in JUMP_KEYS:
                     self.player.request_jump()
@@ -258,11 +272,13 @@ class Game:
 
     def draw_hud(self):
         self.draw_text(self.font, f"PUNKTE  {self.score:05d}", 6, 2)
+        self.draw_text(self.font, f"LEVEL  {self.level_number}", SCREEN_W // 2, 2, align="center")
         self.draw_text(self.font, f"LEBEN  {max(self.lives, 0)}", SCREEN_W - 6, 2, align="right")
 
     def draw_message(self):
-        title = "GESCHAFFT!" if self.state == WON else "GAME OVER"
+        title = f"LEVEL {self.level_number} GESCHAFFT!" if self.state == WON else "GAME OVER"
         color = (252, 214, 50) if self.state == WON else (240, 80, 80)
         self.draw_text(self.big_font, title, SCREEN_W // 2, 50, color, align="center")
         self.draw_text(self.font, f"PUNKTE  {self.score}", SCREEN_W // 2, 88, align="center")
-        self.draw_text(self.font, "R = Nochmal      Esc = Ende", SCREEN_W // 2, 104, align="center")
+        hint = "Enter = Nächstes Level      Esc = Ende" if self.state == WON else "R = Nochmal      Esc = Ende"
+        self.draw_text(self.font, hint, SCREEN_W // 2, 104, align="center")

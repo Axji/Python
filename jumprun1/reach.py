@@ -5,13 +5,13 @@ losrennen und probiert alle Absprungpunkte und alle Zeitpunkte des zweiten Sprun
 nicht an von Hand geschätzten Zahlen: ändert man die Physik in `constants.py`, passt sich die Tabelle an.
 """
 import os
-from functools import lru_cache
+from functools import cache
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
+from .constants import TILE  # noqa: E402
 from .entities import Player  # noqa: E402
 from .level import LEVEL_HEIGHT, Level  # noqa: E402
-from .constants import TILE  # noqa: E402
 
 LEFT_COLS = 8          # Anlauf auf der linken Plattform
 RIGHT_COLS = 8         # Länge der Zielplattform
@@ -61,7 +61,7 @@ def _y_offset():
     return Y_OFFSET
 
 
-@lru_cache(maxsize=None)
+@cache
 def _apex_frame():
     """Nach wie vielen Bildern ist der erste Sprung am höchsten Punkt?"""
     level = Level(_grid(4, 0))
@@ -100,7 +100,7 @@ def can_cross(gap, rise, mode):
     return False
 
 
-@lru_cache(maxsize=None)
+@cache
 def max_gap(rise, mode):
     """Grösste Lückenbreite in Kacheln, die bei diesem Höhenunterschied noch geht (-1: schon Lücke 0 geht nicht)."""
     best = -1

@@ -315,7 +315,7 @@ def test_jumping_against_brick_gives_nothing(monkeypatch):
 # ---------------------------------------------------------------- Level-Generator (ab Level 2)
 
 from jumprun1 import reach  # noqa: E402
-from jumprun1.levelgen import DELAYED_GAPS, GENERATED_WIDTH, KINDS, REACH, generate_grid, plan, profile, required  # noqa: E402
+from jumprun1.levelgen import DELAYED_GAPS, GENERATED_WIDTH, REACH, generate_grid, plan, profile, required  # noqa: E402
 
 SEEDS = range(40)
 

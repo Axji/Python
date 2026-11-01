@@ -226,6 +226,9 @@ STAC-API von data.geo.admin.ch.
     `homogeneous_monthly` ist `WITHOUT ROWID`, die Datenbank ist so nur noch etwa 45 statt 117 MB gross.
   - Schlägt der Download einer Station fehl, werden die übrigen trotzdem gespeichert; das Skript nennt die fehlenden
     Stationen und endet mit Exit-Code 1. Ein Abruf dauert rund zwei Minuten.
+  - Die Downloads versuchen es je Adresse bis zu dreimal (mit wachsender Pause) und nutzen für TLS die klassische Kurve X25519.
+    Grund: Mit Python 3.14 (OpenSSL 3.5) brach data.geo.admin.ch die Verbindung mit der Standardeinstellung zufällig ab
+    (`SSL: UNEXPECTED_EOF_WHILE_READING`), mit X25519 klappte es zuverlässig.
 - `ParameterNames.py`: ordnet den Kürzeln von MeteoSchweiz (z. B. `ths200m0`) sprechende Namen zu (`temp_2m_mean`). Die
   Namen gelten in CSV-Datei und Datenbank; das Originalkürzel steht in `parameters.code`. Unbekannte Kürzel bleiben
   unverändert.

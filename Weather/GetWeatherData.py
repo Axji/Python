@@ -12,8 +12,10 @@ import datetime
 import io
 import json
 import os
+import ssl
 import sys
 import time
+import urllib.error
 import urllib.request
 
 from ParameterNames import parameter_name
@@ -30,16 +32,45 @@ cfg_collections = [c.strip() for c in config['DEFAULT']['collections'].split(','
 cfg_asset_suffix = config['DEFAULT']['assetSuffix']
 cfg_sleep_time = float(config['DEFAULT']['sleepTimeBetweenFiles'])
 REQUEST_TIMEOUT = 30  # Sekunden
+REQUEST_ATTEMPTS = 3  # so oft wird eine Adresse versucht, bevor der Abruf scheitert
 PAGE_SIZE = 100  # Anzahl Stationen pro API-Abfrage
 
 
+def make_ssl_context():
+    """TLS-Einstellungen für die Downloads.
+
+    Python 3.14 (OpenSSL 3.5) schickt beim Verbindungsaufbau standardmässig einen grossen Post-Quantum-Schlüssel mit.
+    data.geo.admin.ch bricht solche Verbindungen manchmal mit "SSL: UNEXPECTED_EOF_WHILE_READING" ab. Mit der klassischen
+    Kurve X25519 klappt es zuverlässig. Kennt die Python-Version die Kurve nicht, gilt die Standardeinstellung.
+    """
+    context = ssl.create_default_context()
+    try:
+        context.set_ecdh_curve('X25519')
+    except ValueError:
+        pass
+    return context
+
+
+SSL_CONTEXT = make_ssl_context()
+
+
 def http_get(url):
-    """Lädt eine Adresse herunter und gibt den Inhalt als Text zurück."""
+    """Lädt eine Adresse herunter und gibt den Inhalt als Text zurück.
+
+    Bei einem Verbindungsfehler wird bis zu REQUEST_ATTEMPTS-mal versucht (mit wachsender Pause), erst dann bricht der Abruf ab.
+    """
     req = urllib.request.Request(url)
     # Eigener User-Agent, damit der Server den Zugriff zuordnen kann
     req.add_header('User-Agent', 'weather-downloader/1.0 (Contact: axel.zenklusen@gmail.com)')
-    with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as response:
-        data = response.read()
+    for attempt in range(1, REQUEST_ATTEMPTS + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT, context=SSL_CONTEXT) as response:
+                data = response.read()
+            break
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            if attempt == REQUEST_ATTEMPTS:
+                raise
+            time.sleep(2 * attempt)
     try:
         return data.decode('utf-8-sig')
     except UnicodeDecodeError:  # Die Metadaten-Dateien sind teilweise in Windows-1252 kodiert

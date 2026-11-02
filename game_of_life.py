@@ -25,8 +25,8 @@ from collections import Counter
 
 import pygame
 
-COLS = 80             # Anzahl Zellen waagrecht
-ROWS = 50             # Anzahl Zellen senkrecht
+COLS = 160            # Anzahl Zellen waagrecht (160 * 12 = 1920 Pixel, die Breite eines FullHD-Monitors)
+ROWS = 83             # Anzahl Zellen senkrecht (76 + 83 * 12 = 1072 Pixel, die Höhe eines FullHD-Monitors)
 CELL = 12             # Kantenlänge einer Zelle in Pixeln
 TOOLBAR_H = 76        # Höhe der Leiste oben mit Knöpfen und Anzeige
 FPS = 60

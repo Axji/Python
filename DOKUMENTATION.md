@@ -71,6 +71,7 @@ uff.exe check .
 | `Weather/` | Klimadaten von MeteoSchweiz laden, SQLite-Ablage | – |
 | `mandelbaum.py` | Mandelbrot-Generator mit Fenster | numpy, pillow |
 | `matrix_simulation.py` | 10×10-Matrix, jede Zelle zählt in einem eigenen Thread | – |
+| `game_of_life.py` | Conways Game of Life mit Fenster: Zeichnen mit der Maus, Start/Stop, Einzelschritt | pygame-ce |
 | `Bingo.py`, `JumpAndRun1.py` | Kleine Spiele | pygame-ce (JumpAndRun) |
 | `jumprun1/` | Jump-and-Run mit Pixeloptik, Schiessen und Plan (siehe `jumprun1/README.md`) | pygame-ce |
 | `sort.py`, `run.py`, `global_lib.py` | Sortieralgorithmen mit Zählern und Demo | – |
@@ -250,6 +251,7 @@ STAC-API von data.geo.admin.ch.
 |---|---|
 | `mandelbaum.py` | Fenster mit Eingabefeldern für Ausschnitt und Iterationen. Berechnet Full HD mit numpy in rund 3 Sekunden, die Pixel sind quadratisch. |
 | `matrix_simulation.py` | 100 Threads zählen je eine Zelle von 0 bis 9 hoch. Start, Stop, Reset. Das Fenster wird nur im Hauptthread aktualisiert. |
+| `game_of_life.py` | Conways Game of Life (80 × 50 Zellen). Linke Maustaste halten setzt Zellen, rechte löscht sie, auch während die Simulation läuft. Leertaste: Start/Stop, `S` oder Pfeil rechts: genau ein Schritt, `C` löschen, `Z` Zufallsfeld, `T` Rand (Torus oder fest), `+`/`-` Tempo. Alle Funktionen gibt es auch als Knöpfe oben im Fenster. Aufruf: `python game_of_life.py`. |
 | `Bingo.py` | Zieht Zahlen 1 bis 75, bis eine Reihe, Spalte oder Diagonale voll ist. Freies Feld in der Mitte, markierte Zahlen als `X`. |
 | `JumpAndRun1.py` | Pfeile bewegen, Leertaste springt, Doppelsprung durch Loslassen und erneutes Drücken. |
 | `run.py` / `sort.py` | Vergleicht Bubblesort, Shakersort und Quicksort (beide Varianten) auf drei Listen. `Sorting` zählt Vergleiche und Vertauschungen, Quicksort ist ebenfalls enthalten, als `quick_sort` (liefert eine neue Liste) und als `quick_sort_in_place` (tauscht wie Bubble- und Shakersort in der übergebenen Liste). Jedes Verfahren hat den Parameter `verbose` mit drei Stufen: `0` keine Ausgabe (Standard), `1` nur die Summen am Ende, zum Beispiel `Fertig: 2 Tausche, 4 Vergleiche` (bei Quicksort Verschiebungen), `2` zusätzlich jeder einzelne Tausch (bei Quicksort jede Verteilung auf die Listen kleiner, gleich und grösser), zum Beispiel `Sorting.bubble_sort(liste, verbose=2)`. |

@@ -66,6 +66,9 @@ CarRace/brains/
 # Wetterdaten werden von GetWeatherData.py neu geladen
 Weather/daten/
 
+# Strombilanz-Daten (CSV und Datenbank) werden von electricity/swiss_electricity.py neu geladen
+electricity/daten/
+
 # PyInstaller: erzeugte .exe und Zwischendateien (JumpRun.spec bleibt im Repo)
 build/
 dist/

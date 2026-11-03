@@ -11,10 +11,11 @@ Warum etwas so gelöst ist, steht in [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md).
 3. [Fitnesspark-Auslastung](#3-fitnesspark-auslastung)
 4. [CarRace (Autorennen mit KI)](#4-carrace-autorennen-mit-ki)
 5. [Wetterdaten (Weather)](#5-wetterdaten-weather)
-6. [Weitere Skripte](#6-weitere-skripte)
-7. [Konfiguration und Geheimnisse](#7-konfiguration-und-geheimnisse)
-8. [Arbeitsweise mit Git](#8-arbeitsweise-mit-git)
-9. [Bekannte Einschränkungen](#9-bekannte-einschränkungen)
+6. [Stromstatistik (electricity)](#6-stromstatistik-electricity)
+7. [Weitere Skripte](#7-weitere-skripte)
+8. [Konfiguration und Geheimnisse](#8-konfiguration-und-geheimnisse)
+9. [Arbeitsweise mit Git](#9-arbeitsweise-mit-git)
+10. [Bekannte Einschränkungen](#10-bekannte-einschränkungen)
 
 ---
 
@@ -69,6 +70,7 @@ uff.exe check .
 | `fitnessparks/` | Import, Bereinigung und Auswertung der Fitnesspark-Daten | – |
 | `CarRace/` | Autorennen mit regelbasierter und lernender KI | pygame-ce |
 | `Weather/` | Klimadaten von MeteoSchweiz laden, SQLite-Ablage | – |
+| `electricity/` | Monatliche Schweizer Strombilanz (BFE) laden, CSV und SQLite, Vergleich über die Zeit | – |
 | `mandelbaum.py` | Mandelbrot-Generator mit Fenster | numpy, pillow |
 | `matrix_simulation.py` | 10×10-Matrix, jede Zelle zählt in einem eigenen Thread | – |
 | `game_of_life.py` | Conways Game of Life mit Fenster: Zeichnen mit der Maus, Start/Stop, Einzelschritt | pygame-ce |
@@ -116,7 +118,13 @@ Ordner, Datei und Tabelle werden bei Bedarf angelegt. Es braucht keinen Datenban
 .\venv\Scripts\python.exe fitnessparks\fitnesspark_csv_to_sqlite.py     # alle CSV in data/ laden
 .\venv\Scripts\python.exe fitnessparks\fitnesspark_clean.py --dry-run   # Testlauf: nur anzeigen
 .\venv\Scripts\python.exe fitnessparks\fitnesspark_clean.py             # wirklich löschen
+.\venv\Scripts\python.exe fitnessparks\fitnesspark_csv_to_sqlite.py --since 2026-11-02   # nur CSV ab diesem Tag laden
+.\venv\Scripts\python.exe fitnessparks\fitnesspark_clean.py --since 2026-11-02           # nur ab diesem Tag bereinigen
 ```
+
+- **Nur ein Teil (`--since JJJJ-MM-TT`):** Import und Bereinigung lassen sich auf die neuesten Tage beschränken. Das
+  Ergebnis ist dasselbe wie bei einem vollständigen Lauf, wenn der Rest der Datenbank schon bereinigt war. Der Stichtag
+  muss bei beiden Skripten derselbe sein, am besten der zuletzt importierte Tag (er war evtl. noch nicht fertig).
 
 - **Import:** Jede Datei läuft in einer eigenen Transaktion. Ein Fehler in einer Datei macht nur diese Datei rückgängig.
   Der Import ist beliebig oft wiederholbar.
@@ -240,12 +248,61 @@ STAC-API von data.geo.admin.ch.
   `py Weather	emperatur_report.py --open` (nach `GetWeatherData.py`).
 - `Init/PrepareDB.py`: legt nur die Datenbank und die Tabellen an, ohne Abruf.
 - `SqlLiteWD.py`: Klasse zum Schreiben in die SQLite-Datenbank, auch als `with`-Block nutzbar.
-- `AzureMsSql.py`: Verbindung zu Azure SQL über Umgebungsvariablen (siehe Abschnitt 7).
+- `AzureMsSql.py`: Verbindung zu Azure SQL über Umgebungsvariablen (siehe Abschnitt 8).
 - `config.ini`: Adresse der API, Datensätze, Dateiendung der Monatsdateien (`_m.csv`), Datenordner und Pause.
 
 ---
 
-## 6. Weitere Skripte
+## 6. Stromstatistik (electricity)
+
+`electricity/swiss_electricity.py` lädt die monatliche **Schweizerische Elektrizitätsbilanz** des Bundesamts für Energie (BFE,
+Datensatz ogd35 auf opendata.swiss, Quelle: `https://www.bfe-ogd.ch/ogd35/ogd35_schweizerische_elektrizitaetsbilanz_monatswerte.csv`).
+Die Datei enthält alle Monate seit Januar 2000 in GWh. Die jüngsten Monate sind provisorisch und werden vom BFE später korrigiert.
+
+Aufruf (ohne Zusatzpakete, nur Standardbibliothek):
+
+```bash
+py electricity/swiss_electricity.py             # laden, speichern, Zusammenfassung ausgeben
+py electricity/swiss_electricity.py --offline   # zuletzt gespeicherte CSV-Datei neu einlesen, ohne Download
+py electricity/swiss_electricity.py --daten ORDNER   # anderer Ordner für CSV und Datenbank
+```
+
+Ergebnis im Ordner `electricity/daten/` (nicht im Repository):
+
+- `elektrizitaetsbilanz_monatswerte_JJJJMMTT.csv`: die unveränderte Quelldatei vom Abruftag. Ältere Dateien bleiben liegen, so
+  lassen sich Korrekturen der provisorischen Werte nachvollziehen.
+- `electricity.db` (SQLite): Tabelle `monthly` mit einem Datensatz pro Monat (Neuladen aktualisiert bestehende Monate), Tabelle
+  `abrufe` als Protokoll (neue und geänderte Monate pro Abruf) und die Sichten unten.
+
+Enthaltene Grössen: Erzeugung nach Laufwerken, Speicherwerken, Kernkraft, Thermischen, Wind und Photovoltaik, `andere` (bis 2019,
+damals nicht einzeln ausgewiesen), Landeserzeugung, Pumpstrom, Nettoerzeugung, Einfuhr, Ausfuhr, Landesverbrauch, Verluste und
+Endverbrauch. Nicht ausgewiesene Werte sind `NULL`: Photovoltaik, Wind und Thermische gibt es erst seit 2020 getrennt.
+
+**Über- und Unterproduktion:** `ueberschuss_gwh` = Nettoerzeugung minus Landesverbrauch. Das ist dasselbe wie Ausfuhr minus
+Einfuhr. Positiv (`Ueberproduktion`) heisst, es wurde mehr erzeugt als verbraucht, negativ (`Unterproduktion`) heisst netto
+importiert. `eigendeckung_pct` ist die Nettoerzeugung in Prozent des Landesverbrauchs.
+
+| Sicht | Inhalt |
+|---|---|
+| `v_monat` | Monatswerte mit `wasserkraft_gwh`, Überschuss, Status, Eigendeckung und Anteilen von Wasserkraft, Kernkraft und Photovoltaik |
+| `v_jahr` | Jahressummen, `vollstaendig` = 1 nur bei zwölf Monaten, Differenz zum Vorjahr |
+| `v_halbjahr` | Winter (Oktober bis März, z. B. `Winter 2025/26`) und Sommer (April bis September) |
+| `v_vorjahr` | jeder Monat neben demselben Vorjahresmonat, mit Differenz in GWh und Prozent |
+
+Beispiel: Winterhalbjahre mit Über- oder Unterproduktion vergleichen:
+
+```sql
+SELECT halbjahr, ueberschuss_gwh, status, eigendeckung_pct FROM v_halbjahr WHERE typ = 'Winter' AND vollstaendig = 1;
+```
+
+Beim Einlesen werden die Rechenregeln der Quelle geprüft (Landeserzeugung = Summe der Kraftwerksarten, Nettoerzeugung =
+Landeserzeugung minus Pumpstrom, Landesverbrauch = Nettoerzeugung plus Einfuhr minus Ausfuhr, Endverbrauch = Landesverbrauch
+minus Verluste, Toleranz 3 GWh wegen Rundung). Abweichungen werden gemeldet, die Daten aber trotzdem gespeichert. Fehlen Spalten
+oder ist die Datei leer, bricht der Abruf ab, bevor etwas überschrieben wird. Tests: `tests/test_swiss_electricity.py`.
+
+---
+
+## 7. Weitere Skripte
 
 | Skript | Beschreibung |
 |---|---|
@@ -258,7 +315,7 @@ STAC-API von data.geo.admin.ch.
 
 ---
 
-## 7. Konfiguration und Geheimnisse
+## 8. Konfiguration und Geheimnisse
 
 Zugangsdaten stehen **nie** im Code und nie im Repository. Sie werden aus Umgebungsvariablen gelesen:
 
@@ -270,11 +327,11 @@ Zugangsdaten stehen **nie** im Code und nie im Repository. Sie werden aus Umgebu
 | `AZURE_SQL_DATABASE` | `Weather/AzureMsSql.py` | optional, sonst `AxjiDB1` |
 
 Nicht im Repository (stehen in `.gitignore`): `venv/`, `.idea/`, `.vs/`, `__pycache__/`, `.env`, `*.db`, `data/` und
-`CarRace/brains/`.
+`CarRace/brains/`, `Weather/daten/` und `electricity/daten/`.
 
 ---
 
-## 8. Arbeitsweise mit Git
+## 9. Arbeitsweise mit Git
 
 - Repository: <https://github.com/Axji/Python>, Hauptzweig `master`.
 - Änderungen laufen in der Regel über einen eigenen Branch und einen Pull Request. Kleine Einrichtungsänderungen (zum
@@ -284,10 +341,10 @@ Nicht im Repository (stehen in `.gitignore`): `venv/`, `.idea/`, `.vs/`, `__pyca
 
 ---
 
-## 9. Bekannte Einschränkungen
+## 10. Bekannte Einschränkungen
 
 - Die Wetter-Auswertung schreibt noch nicht in die Datenbank (siehe 5).
 - Die Abrufe der Fitnesspark-Website und von MeteoSchweiz hängen von deren Adressen ab. Ändern sich diese, brechen die
   Skripte ab. Die MeteoSchweiz-Adresse in `config.ini` verwendet `http` und sollte geprüft werden.
 - Die Auswertung der Fitnesspark-Daten lädt Plotly aus dem Internet und ist offline nicht nutzbar.
-- Automatische Tests gibt es nur für `sort.py` und `global_lib.py` (Ordner `tests/`). Die Skripte für Spiele, Fitnesspark und Wetter sind nur von Hand geprüft.
+- Automatische Tests gibt es für `sort.py`, `global_lib.py`, `game_of_life.py`, `jumprun1/` und `electricity/` (Ordner `tests/`). Die Skripte für Fitnesspark und Wetter sind nur von Hand geprüft.

@@ -70,7 +70,7 @@ uff.exe check .
 | `fitnessparks/` | Import, Bereinigung und Auswertung der Fitnesspark-Daten | – |
 | `CarRace/` | Autorennen mit regelbasierter und lernender KI | pygame-ce |
 | `Weather/` | Klimadaten von MeteoSchweiz laden, SQLite-Ablage | – |
-| `electricity/` | Monatliche Schweizer Strombilanz (BFE) laden, CSV und SQLite, Vergleich über die Zeit | – |
+| `electricity/` | Monatliche Schweizer Strombilanz (BFE) laden, CSV und SQLite, HTML-Auswertung | – |
 | `mandelbaum.py` | Mandelbrot-Generator mit Fenster | numpy, pillow |
 | `matrix_simulation.py` | 10×10-Matrix, jede Zelle zählt in einem eigenen Thread | – |
 | `game_of_life.py` | Conways Game of Life mit Fenster: Zeichnen mit der Maus, Start/Stop, Einzelschritt | pygame-ce |
@@ -299,6 +299,24 @@ Beim Einlesen werden die Rechenregeln der Quelle geprüft (Landeserzeugung = Sum
 Landeserzeugung minus Pumpstrom, Landesverbrauch = Nettoerzeugung plus Einfuhr minus Ausfuhr, Endverbrauch = Landesverbrauch
 minus Verluste, Toleranz 3 GWh wegen Rundung). Abweichungen werden gemeldet, die Daten aber trotzdem gespeichert. Fehlen Spalten
 oder ist die Datei leer, bricht der Abruf ab, bevor etwas überschrieben wird. Tests: `tests/test_swiss_electricity.py`.
+
+### Auswertungs-Seite – `electricity_report.py`
+
+`electricity/electricity_report.py` liest die Datenbank (nur lesend) und schreibt die interaktive Seite
+`electricity/daten/strom_auswertung.html`, im gleichen Stil wie die Wetter- und Fitnesspark-Auswertung (Plotly aus dem Internet, helles
+und dunkles Farbschema, keine Zusatzpakete). Zuerst `swiss_electricity.py` ausführen.
+
+```bash
+py electricity/electricity_report.py --open     # Seite erzeugen und im Browser öffnen
+py electricity/electricity_report.py --out DATEI --daten ORDNER
+```
+
+Die Seite zeigt Kennzahlen (neuester Monat, letztes volles Jahr, letzter voller Winter, Photovoltaik, Kernkraft) und eine
+Zusammenfassung, wie oft über- oder unterproduziert wurde. Darunter folgen Diagramme: Überschuss pro Monat mit 12-Monats-Summe,
+Jahresbilanz mit Eigendeckung, Winter gegen Sommer, Erzeugung nach Kraftwerksart pro Jahr (absolut oder als Anteil) und pro Monat,
+Einfuhr und Ausfuhr, der Jahresverlauf einer wählbaren Kennzahl (letzte sechs Jahre übereinander) und eine Tabelle der letzten zwölf
+Monate. Der Zeitraum der Diagramme ist wählbar. Jahres- und Halbjahreswerte zählen nur bei vollständigen Monaten, provisorische Monate
+sind in den Monatsdiagrammen blasser. Tests: `tests/test_electricity_report.py`.
 
 ---
 

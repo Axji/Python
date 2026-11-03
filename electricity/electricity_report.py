@@ -6,13 +6,9 @@ unterproduziert hat (Überschuss = Nettoerzeugung minus Landesverbrauch = Ausfuh
   2. Über- und Unterproduktion pro Monat, mit 12-Monats-Summe
   3. Jahresbilanz: Überschuss pro Jahr und Eigendeckung in Prozent des Verbrauchs
   4. Winter (Oktober bis März) gegen Sommer (April bis September)
-  5. Erzeugung nach Kraftwerksart pro Jahr, absolut oder als Anteil
-  6. Erzeugung nach Kraftwerksart pro Monat
-  7. Einfuhr und Ausfuhr pro Monat
-  8. Jahresverlauf: eine wählbare Kennzahl je Kalendermonat, die letzten Jahre übereinander
-  9. Tabelle der letzten zwölf Monate
+  5. Erzeugung nach Herstellungsart pro Jahr, absolut oder als Anteil
 Der Zeitraum der Diagramme ist wählbar (alle Jahre, seit 2010, seit 2020). Jahres- und Halbjahreswerte zählen nur, wenn alle
-Monate vorhanden sind; das laufende Jahr fehlt deshalb. Provisorische Monate sind in den Monatsdiagrammen blasser gezeichnet.
+Monate vorhanden sind; das laufende Jahr fehlt deshalb. Provisorische Monate sind im Monatsdiagramm blasser gezeichnet.
 
 Die Datenbank wird nur gelesen (zuerst swiss_electricity.py ausführen). Die Seite lädt die Diagramm-Bibliothek Plotly aus
 dem Internet, es sind keine Python-Zusatzpakete nötig.
@@ -92,10 +88,6 @@ HTML = r"""<!doctype html>
   .pos { color:var(--pos); } .neg { color:var(--neg); }
   #summary { background:var(--card); border-left:4px solid var(--accent); padding:10px 14px; border-radius:4px; margin-bottom:12px; }
   .chart { width:100%; }
-  table { border-collapse:collapse; width:100%; max-width:820px; font-size:14px; }
-  th, td { padding:5px 10px; border-bottom:1px solid var(--line); text-align:right; }
-  th:first-child, td:first-child, th:nth-child(6), td:nth-child(6) { text-align:left; }
-  th { color:var(--muted); font-weight:600; }
 </style>
 </head>
 <body>
@@ -108,17 +100,8 @@ HTML = r"""<!doctype html>
     <option value="2010">seit 2010</option>
     <option value="2020">seit 2020</option>
   </select></label>
-  <label>Kennzahl im Jahresverlauf <select id="metric">
-    <option value="ueberschuss">Überschuss (Erzeugung minus Verbrauch)</option>
-    <option value="eigendeckung">Eigendeckung in % des Verbrauchs</option>
-    <option value="landeserzeugung">Landeserzeugung</option>
-    <option value="landesverbrauch">Landesverbrauch</option>
-    <option value="einfuhr">Einfuhr</option>
-    <option value="ausfuhr">Ausfuhr</option>
-    <option value="wasserkraft">Wasserkraft</option>
-    <option value="kernkraft">Kernkraft</option>
-    <option value="photovoltaik">Photovoltaik</option>
-  </select></label>
+</div>
+
 </div>
 
 <div id="summary"></div>
@@ -136,30 +119,15 @@ HTML = r"""<!doctype html>
 <p class="note">Überschuss je Halbjahr: Winter von Oktober bis März, Sommer von April bis September. Nur vollständige Halbjahre.</p>
 <div id="c_half" class="chart"></div>
 
-<h2>Erzeugung nach Kraftwerksart pro Jahr</h2>
+<h2>Erzeugung nach Herstellungsart pro Jahr</h2>
 <p class="note">Landeserzeugung vor Abzug des Pumpstroms. Linie (nur absolut): Landesverbrauch. Wind, Photovoltaik und Thermische sind erst seit 2020 einzeln ausgewiesen, davor stehen sie unter «andere».</p>
 <div class="controls"><label>Darstellung <select id="mix">
   <option value="">absolut in GWh</option><option value="percent">Anteil in %</option></select></label></div>
 <div id="c_mix_year" class="chart"></div>
 
-<h2>Erzeugung nach Kraftwerksart pro Monat</h2>
-<p class="note">Im Sommer tragen Photovoltaik und Laufwerke bei, im Winter fehlt vor allem die Wasserkraft aus der Schneeschmelze.</p>
-<div id="c_mix_month" class="chart"></div>
-
-<h2>Einfuhr und Ausfuhr</h2>
-<p class="note">Physikalische Ein- und Ausfuhr pro Monat. Wo die grüne Linie über der roten liegt, wurde netto exportiert.</p>
-<div id="c_trade" class="chart"></div>
-
-<h2>Jahresverlauf der gewählten Kennzahl</h2>
-<p class="note">Die letzten sechs Jahre übereinander, das neueste Jahr in Rot. Kennzahl oben wählbar.</p>
-<div id="c_season" class="chart"></div>
-
-<h2>Letzte zwölf Monate</h2>
-<table id="table"></table>
 
 <script>
 const DATA = __DATA__;
-const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const N = DATA.periods.length;
 const S = DATA.series;
@@ -197,8 +165,7 @@ const halfStart = h => +h.key.slice(1);
 
 function render() {
   const from = +(document.getElementById('range').value === 'all' ? 0 : document.getElementById('range').value);
-  const metric = document.getElementById('metric').value;
-  const fg = css('--fg'), muted = css('--muted'), line = css('--line'), pos = css('--pos'), neg = css('--neg'), accent = css('--accent');
+  const fg = css('--fg'), muted = css('--muted'), line = css('--line'), pos = css('--pos'), neg = css('--neg');
   const winterC = css('--winter'), summerC = css('--summer');
   const years = YEARS.filter(y => +y.key >= from);
   const halves = HALVES.filter(h => halfStart(h) >= from);
@@ -278,40 +245,10 @@ function render() {
   Plotly.react('c_mix_year', mixTraces, layout({height: 400, barmode: 'stack', barnorm: percent ? 'percent' : '', margin: {l: 60, r: 15, t: 10, b: 40},
     xaxis: {gridcolor: line, type: 'category'}, yaxis: axis(percent ? 'Anteil in %' : 'GWh pro Jahr')}), cfg);
 
-  // ---- 5. Mix pro Monat
-  Plotly.react('c_mix_month', MIX.map(m => ({type: 'bar', x: dates, y: months.map(i => S[m[0]][i]), name: m[1], marker: {color: m[2]},
-    hovertemplate: '%{x|%Y-%m}: %{y:,.0f} GWh<extra>' + m[1] + '</extra>'})),
-    layout({height: 380, barmode: 'stack', margin: {l: 60, r: 15, t: 10, b: 40}, yaxis: axis('GWh pro Monat')}), cfg);
-
-  // ---- 6. Einfuhr und Ausfuhr
-  Plotly.react('c_trade', [
-    {type: 'scatter', mode: 'lines', x: dates, y: months.map(i => S.ausfuhr[i]), name: 'Ausfuhr', line: {color: pos, width: 2}, hovertemplate: '%{x|%Y-%m}: %{y:,.0f} GWh<extra>Ausfuhr</extra>'},
-    {type: 'scatter', mode: 'lines', x: dates, y: months.map(i => S.einfuhr[i]), name: 'Einfuhr', line: {color: neg, width: 2}, hovertemplate: '%{x|%Y-%m}: %{y:,.0f} GWh<extra>Einfuhr</extra>'},
-  ], layout({height: 340, margin: {l: 60, r: 15, t: 10, b: 40}, yaxis: axis('GWh pro Monat')}), cfg);
-
-  // ---- 7. Jahresverlauf der gewählten Kennzahl (letzte sechs Jahre im Zeitraum)
-  const seasonYears = [...new Set(months.map(i => yearOf[i]))].slice(-6);
-  const palette = ['#9fb0c0', '#7e94a8', '#5d7a96', '#3f6a96', accent, neg];
-  const metricLabel = document.getElementById('metric').selectedOptions[0].textContent;
-  Plotly.react('c_season', seasonYears.map((yr, k) => {
-    const y = MONTHS.map((_, m) => { const i = DATA.periods.indexOf(yr + '-' + String(m + 1).padStart(2, '0')); return i < 0 ? null : S[metric][i]; });
-    const newest = k === seasonYears.length - 1;
-    return {type: 'scatter', mode: 'lines+markers', x: MONTHS, y, name: '' + yr, line: {color: newest ? neg : palette[k + 6 - seasonYears.length], width: newest ? 3.5 : 2},
-      hovertemplate: '%{x} ' + yr + ': %{y:,.1f}<extra></extra>'};
-  }), layout({height: 380, margin: {l: 60, r: 15, t: 10, b: 40}, yaxis: axis(metricLabel.replace(/ \(.*\)/, ''))}), cfg);
-
-  // ---- 8. Tabelle der letzten zwölf Monate
-  const rows = [...Array(Math.min(12, N)).keys()].map(k => N - 1 - k);
-  document.getElementById('table').innerHTML =
-    '<tr><th>Monat</th><th>Erzeugung</th><th>Verbrauch</th><th>Einfuhr</th><th>Ausfuhr</th><th>Status</th><th>Eigendeckung</th></tr>' +
-    rows.map(i => `<tr><td>${DATA.periods[i]}${DATA.definitiv[i] ? '' : '*'}</td><td>${num(S.erzeugung_netto[i])}</td><td>${num(S.landesverbrauch[i])}</td>` +
-      `<td>${num(S.einfuhr[i])}</td><td>${num(S.ausfuhr[i])}</td><td class="${S.ueberschuss[i] >= 0 ? 'pos' : 'neg'}">${statusText(S.ueberschuss[i])} (${signed(S.ueberschuss[i])})</td>` +
-      `<td>${num(S.eigendeckung[i], 1)} %</td></tr>`).join('') +
-    '<tr><td colspan="7" style="text-align:left;color:var(--muted)">GWh; Erzeugung = Nettoerzeugung nach Pumpstrom; * = provisorisch</td></tr>';
 }
 
 document.getElementById('retrieved').textContent = 'Abruf ' + (DATA.retrievedAt || '').replace('T', ' ');
-['range', 'metric', 'mix'].forEach(id => document.getElementById(id).addEventListener('change', render));
+['range', 'mix'].forEach(id => document.getElementById(id).addEventListener('change', render));
 render();
 </script>
 </body>

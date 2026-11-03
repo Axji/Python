@@ -71,5 +71,5 @@ def test_main_uses_custom_output_file(data_dir):
 
 
 def test_page_contains_every_chart_container():
-    for chart in ['c_surplus', 'c_years', 'c_half', 'c_mix_year', 'c_mix_month', 'c_trade', 'c_season']:
+    for chart in ['c_surplus', 'c_years', 'c_half', 'c_mix_year']:
         assert f'id="{chart}"' in er.HTML and f"'{chart}'" in er.HTML  # Container vorhanden und von render() befüllt

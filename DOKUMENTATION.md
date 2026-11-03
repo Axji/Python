@@ -311,12 +311,11 @@ py electricity/electricity_report.py --open     # Seite erzeugen und im Browser 
 py electricity/electricity_report.py --out DATEI --daten ORDNER
 ```
 
-Die Seite zeigt Kennzahlen (neuester Monat, letztes volles Jahr, letzter voller Winter, Photovoltaik, Kernkraft) und eine
-Zusammenfassung, wie oft über- oder unterproduziert wurde. Darunter folgen Diagramme: Überschuss pro Monat mit 12-Monats-Summe,
-Jahresbilanz mit Eigendeckung, Winter gegen Sommer, Erzeugung nach Kraftwerksart pro Jahr (absolut oder als Anteil) und pro Monat,
-Einfuhr und Ausfuhr, der Jahresverlauf einer wählbaren Kennzahl (letzte sechs Jahre übereinander) und eine Tabelle der letzten zwölf
-Monate. Der Zeitraum der Diagramme ist wählbar. Jahres- und Halbjahreswerte zählen nur bei vollständigen Monaten, provisorische Monate
-sind in den Monatsdiagrammen blasser. Tests: `tests/test_electricity_report.py`.
+Die Seite beschränkt sich auf das Wichtigste. Oben stehen Kennzahlen (neuester Monat, letztes volles Jahr, letzter voller Winter,
+Photovoltaik, Kernkraft) und eine Zusammenfassung, wie oft über- oder unterproduziert wurde. Darunter folgen vier Diagramme:
+Überschuss pro Monat mit 12-Monats-Summe, Jahresbilanz mit Eigendeckung, Winter gegen Sommer und die Erzeugung nach Herstellungsart
+pro Jahr (absolut oder als Anteil). Der Zeitraum der Diagramme ist wählbar. Jahres- und Halbjahreswerte zählen nur bei vollständigen
+Monaten, provisorische Monate sind im Monatsdiagramm blasser. Tests: `tests/test_electricity_report.py`.
 
 ---
 

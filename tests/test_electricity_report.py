@@ -59,7 +59,7 @@ def test_main_writes_page_with_embedded_data(data_dir, capsys):
     er.main(['--daten', str(data_dir)])
     page = (data_dir / er.OUT_NAME).read_text(encoding='utf-8')
     assert '__DATA__' not in page and 'cdn.plot.ly' in page
-    embedded = re.search(r'const DATA = (\{.*?\});\nconst MONTHS', page, re.S).group(1)
+    embedded = re.search(r'const DATA = (\{.*?\});\n', page, re.S).group(1)
     assert json.loads(embedded)['periods'][-1] == '2026-01'  # die eingebetteten Daten sind gültiges JSON
     assert 'Fertig:' in capsys.readouterr().out
 

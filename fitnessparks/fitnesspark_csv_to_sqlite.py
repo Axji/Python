@@ -5,10 +5,12 @@ nützlich, um ältere CSV-Dateien nachträglich zu laden. Die Datenbank (data/fi
 Tabelle automatisch angelegt, es wird kein Datenbankserver und kein Passwort benötigt. Bereits vorhandene Zeilen
 werden übersprungen, der Import kann also gefahrlos wiederholt werden. Es werden keine Zusatzpakete benötigt.
 """
+import argparse
 import csv
 import datetime as dt
 import glob
 import os
+import re
 import sqlite3
 import sys
 
@@ -17,6 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import fitnesspark_db  # noqa: E402
 
 LOAD_USER = 'PythonScript'  # Benutzer, der den Ladevorgang durchführt
+DATE_IN_NAME = re.compile(r'\d{4}-\d{2}-\d{2}')  # Datum im Dateinamen, z. B. Fitnesspark_Belegung_2026-11-02.csv
 
 
 def read_csv_rows(file, load_user):
@@ -48,13 +51,18 @@ def read_csv_rows(file, load_user):
     return rows
 
 
-def load_csv_to_sqlite(csv_dir, db_conn, load_user):
+def load_csv_to_sqlite(csv_dir, db_conn, load_user, since=None):
     """
     Liest alle CSV-Dateien aus einem Verzeichnis und fügt sie in die SQLite-Tabelle ein.
     Jede Datei wird in einer eigenen Transaktion geladen: Ein Fehler in einer Datei
     macht nur diese Datei rückgängig, bereits geladene Dateien bleiben erhalten.
+    Mit `since` (JJJJ-MM-TT) werden nur Dateien ab diesem Datum im Dateinamen geladen.
+    Dateien ohne Datum im Namen werden immer geladen.
     """
     files = glob.glob(os.path.join(csv_dir, '*.csv'))
+    if since:
+        files = [f for f in files if not (m := DATE_IN_NAME.search(os.path.basename(f))) or m.group() >= since]
+        print(f"Nur CSV-Dateien ab {since}.")
     if not files:
         print(f"Keine CSV-Dateien im Verzeichnis '{csv_dir}' gefunden.")
         return
@@ -79,6 +87,13 @@ def main():
     """
     Hauptfunktion zur Steuerung des Skripts.
     """
+    parser = argparse.ArgumentParser(description="Lädt die CSV-Dateien der Fitnesspark-Auslastung in die Datenbank.")
+    parser.add_argument("--since", metavar="JJJJ-MM-TT",
+                        help="Nur CSV-Dateien ab diesem Datum laden (Standard: alle).")
+    args = parser.parse_args()
+    if args.since:
+        dt.date.fromisoformat(args.since)  # Fehler bei ungültigem Datum, bevor etwas geladen wird
+
     print("Starte den Ladevorgang...")
 
     connection = None  # Vorab setzen, damit `finally` auch nach einem Verbindungsfehler funktioniert
@@ -86,7 +101,7 @@ def main():
         # Legt Datenordner, Datenbankdatei und Tabelle bei Bedarf an
         connection = fitnesspark_db.open_database()
         print(f"Verbindung zur SQLite-Datenbank '{fitnesspark_db.DB_PATH}' erfolgreich hergestellt.")
-        load_csv_to_sqlite(fitnesspark_db.DATA_DIR, connection, LOAD_USER)
+        load_csv_to_sqlite(fitnesspark_db.DATA_DIR, connection, LOAD_USER, args.since)
 
     except sqlite3.Error as e:
         print(f"Fehler bei der Datenbankverbindung: {e}")

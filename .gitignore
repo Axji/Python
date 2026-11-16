@@ -72,3 +72,6 @@ electricity/daten/
 # PyInstaller: erzeugte .exe und Zwischendateien (JumpRun.spec bleibt im Repo)
 build/
 dist/
+
+# SBB-Pünktlichkeit: heruntergeladene Ist-Daten (CSV pro Tag) und erzeugte Seite
+SBB/daten/

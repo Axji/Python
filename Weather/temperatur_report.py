@@ -289,7 +289,9 @@ for (let start = 1991; start >= 1871; start -= 30) {
     baseSel.add(new Option(start + '–' + (start + 29), start + '-' + (start + 29)));
   }
 }
-baseSel.value = '1991-2020';
+// Standard-Referenzperiode (bleibt bei Daten-Updates bestehen)
+const DEFAULT_BASELINE = '1931-1960';
+baseSel.value = [...baseSel.options].some(o => o.value === DEFAULT_BASELINE) ? DEFAULT_BASELINE : '1991-2020';
 const sel = document.getElementById('station');
 sel.innerHTML = DATA.stations.map(s => `<option value="${s.abbr}">${s.name} (${s.abbr})</option>`).join('');
 sel.value = (DATA.stations.find(s => s.abbr === 'SIO') || DATA.stations[0]).abbr;

@@ -52,7 +52,7 @@ def compact(by_wd, by_st):
     vms = sorted({k[0] for k in by_wd} | {k[0] for k in by_st})
     vi = {v: i for i, v in enumerate(vms)}
     total = defaultdict(int)
-    for (vm, st, h), c in by_st.items():
+    for (_vm, st, _h), c in by_st.items():
         total[st] += c[0]
     stations = sorted(total, key=lambda s: -total[s])[:TOP_STATIONS]
     si = {s: i for i, s in enumerate(stations)}

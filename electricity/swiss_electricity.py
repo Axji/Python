@@ -41,8 +41,8 @@ DATA_DIR = os.path.join(BASE_DIR, 'daten')
 CSV_PREFIX = 'elektrizitaetsbilanz_monatswerte_'
 DB_NAME = 'electricity.db'
 SOURCE_URL = 'https://www.bfe-ogd.ch/ogd35/ogd35_schweizerische_elektrizitaetsbilanz_monatswerte.csv'
-REQUEST_TIMEOUT = 30  # Sekunden
-REQUEST_ATTEMPTS = 3  # so oft wird die Adresse versucht, bevor der Abruf scheitert
+REQUEST_TIMEOUT = 20  # Sekunden
+REQUEST_ATTEMPTS = 5 # so oft wird die Adresse versucht, bevor der Abruf scheitert
 TOLERANCE_GWH = 3  # erlaubte Rundungsabweichung bei den Kontrollsummen
 
 # Spalten der Quelldatei und die zugehörigen Spalten der Tabelle (alles GWh)
@@ -91,15 +91,18 @@ def fetch_csv(url=SOURCE_URL):
     req = urllib.request.Request(url)
     # Eigener User-Agent, damit der Server den Zugriff zuordnen kann
     req.add_header('User-Agent', 'electricity-downloader/1.0 (Contact: axel.zenklusen@gmail.com)')
+    # Der Server bricht gelegentlich einzelne TLS-Verbindungen ab (EOF/Timeout): neu versuchen, mit wachsender Pause
+    # und abwechselnd mit den beiden TLS-Einstellungen
+    contexts = [SSL_CONTEXT, ssl.create_default_context()]
     for attempt in range(1, REQUEST_ATTEMPTS + 1):
         try:
-            with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT, context=SSL_CONTEXT) as response:
+            with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT, context=contexts[(attempt - 1) % 2]) as response:
                 data = response.read()
             break
-        except (urllib.error.URLError, TimeoutError, ConnectionError):
+        except (urllib.error.URLError, TimeoutError, ConnectionError, ssl.SSLError):
             if attempt == REQUEST_ATTEMPTS:
                 raise
-            time.sleep(2 * attempt)
+            time.sleep(10 * attempt)
     return data.decode('utf-8-sig')
 
 

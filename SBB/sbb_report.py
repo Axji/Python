@@ -86,11 +86,15 @@ HTML = r"""<!doctype html>
   .card .v { font-size:24px; font-weight:600; }
   .card .l { color:var(--muted); font-size:13px; }
   .chart { width:100%; }
+  .wip { background:#fff4d6; color:#5c4300; border:1px solid #e6c35c; border-radius:8px; padding:8px 12px; margin:0 0 14px; font-size:14px; }
+  @media (prefers-color-scheme: dark) { .wip { background:#3a2f10; color:#f3dca0; border-color:#7a6320; } }
 </style>
 </head>
 <body>
 <h1>Wie pünktlich sind die Züge der SBB?</h1>
 <div class="sub">Soll/Ist-Vergleich der Ankunftszeiten, Quelle: data.sbb.ch (Ist-Daten) · <span id="period"></span> · Abruf <span id="retrieved"></span></div>
+
+<div class="wip" id="wip" hidden></div>
 
 <div class="controls">
   <label>Heatmap <select id="view">
@@ -127,6 +131,10 @@ $('retrieved').textContent = DATA.retrievedAt.replace('T', ' ');
 const d0 = DATA.days[0], d1 = DATA.days[DATA.days.length - 1];
 const dfmt = d => d.split('-').reverse().join('.');
 $('period').textContent = DATA.days.length === 1 ? 'Betriebstag ' + dfmt(d0) : DATA.days.length + ' Betriebstage (' + dfmt(d0) + ' bis ' + dfmt(d1) + ')';
+if (DATA.days.length < 7) {
+  $('wip').hidden = false;
+  $('wip').innerHTML = '<b>Noch im Aufbau:</b> Es liegen erst ' + DATA.days.length + ' von mindestens 7 Betriebstagen vor. Die Auswertung wird aussagekräftiger, je mehr Tage gesammelt sind.';
+}
 $('vm').innerHTML = '<option value="-1">Alle Zugarten</option>' + DATA.vms.map((v, i) => `<option value="${i}">${v}</option>`).join('');
 
 // Kennzahl einer Zelle aus [Ankünfte, pünktlich, Summe Verspätung s, ab 6 Min.]

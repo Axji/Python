@@ -1,4 +1,4 @@
-"""Baut die Pünktlichkeits-Heatmap der SBB als eigenständige HTML-Seite (daten/puenktlichkeit_auswertung.html).
+"""Baut die Pünktlichkeits-Heatmap der Züge in der Schweiz als eigenständige HTML-Seite (daten/puenktlichkeit_auswertung.html).
 
 Liest alle CSV-Dateien daten/ist_daten_*.csv (siehe get_sbb_data.py) und verdichtet sie:
   - Verspätung = prognostizierte (REAL = gemessene) minus fahrplanmässige Ankunftszeit
@@ -93,8 +93,8 @@ HTML = r"""<!doctype html>
 </style>
 </head>
 <body>
-<h1>Wie pünktlich sind die Züge der SBB?</h1>
-<div class="sub">Soll/Ist-Vergleich der Ankunftszeiten, Quelle: data.sbb.ch (Ist-Daten) · <span id="period"></span> · Abruf <span id="retrieved"></span></div>
+<h1>Wie pünktlich sind die Züge in der Schweiz?</h1>
+<div class="sub">Soll/Ist-Vergleich der Ankunftszeiten, Quelle: opentransportdata.swiss (Ist-Daten, alle Bahnunternehmen) · <span id="period"></span> · Abruf <span id="retrieved"></span></div>
 
 <div class="wip" id="wip" hidden></div>
 

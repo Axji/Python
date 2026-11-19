@@ -1,13 +1,12 @@
-"""Lädt die Ist-Daten der SBB von opentransportdata.swiss (Datensatz ist-daten-v2) und speichert sie als CSV-Datei pro
+"""Lädt die Ist-Daten der Züge von opentransportdata.swiss (Datensatz ist-daten-v2) und speichert sie als CSV-Datei pro
 Betriebstag in daten/ist_daten_JJJJMMTT.csv.
 
 Die Plattform bietet die letzten rund 50 Betriebstage als Tagesdateien an (je etwa 500 MB, alle Verkehrsmittel der Schweiz).
 Fehlt ein Tag in daten/, weil der PC aus war, wird er darum einfach nachgeladen. Standardmässig werden die letzten 14 Tage
 geprüft; vorhandene Tage werden übersprungen.
 
-Gespeichert werden nur SBB-Züge (PRODUKT_ID = Zug, BETREIBER_ABK = SBB, FAHRT_BEZEICHNER beginnt mit ch:1:sjyid: das ist
-dieselbe Auswahl wie im früheren Datensatz data.sbb.ch/ist-daten-sbb) und nur die Spalten, die für die Pünktlichkeits-
-auswertung nötig sind. Datum und Zeiten werden ins ISO-Format gebracht (JJJJ-MM-TT, JJJJ-MM-TTThh:mm:ss).
+Gespeichert werden nur Züge aller Bahnunternehmen (PRODUKT_ID = Zug, also ohne Bus, Tram, Metro und Schiff; SBB, BLS, Thurbo,
+RhB, ...) und nur die Spalten, die für die Pünktlichkeitsauswertung nötig sind (etwa 25 MB pro Tag). Datum und Zeiten werden ins ISO-Format gebracht (JJJJ-MM-TT, JJJJ-MM-TTThh:mm:ss).
 
 Aufruf: get_sbb_data.py [--tage N] [--neu]   (--neu lädt auch bereits vorhandene Tage erneut und ersetzt ihre Dateien)
 """
@@ -75,7 +74,7 @@ def convert(row: dict[str, str]) -> list[str]:
 
 
 def download_day(day: str, url: str) -> int:
-    """Lädt einen Tag im Datenstrom, filtert auf SBB-Züge und schreibt ist_daten_JJJJMMTT.csv. Gibt die Zeilenzahl zurück."""
+    """Lädt einen Tag im Datenstrom, filtert auf Züge und schreibt ist_daten_JJJJMMTT.csv. Gibt die Zeilenzahl zurück."""
     path = OUT / f"ist_daten_{day.replace('-', '')}.csv"
     tmp = path.with_suffix(".tmp")
     n = 0
@@ -85,12 +84,12 @@ def download_day(day: str, url: str) -> int:
         w.writerow(COLUMNS)
         text = io.TextIOWrapper(r, encoding="utf-8-sig", newline="")
         for row in csv.DictReader(text, delimiter=";"):
-            if row["PRODUKT_ID"] == "Zug" and row["BETREIBER_ABK"] == "SBB" and row["FAHRT_BEZEICHNER"].startswith("ch:1:sjyid:"):
+            if row["PRODUKT_ID"] == "Zug":
                 w.writerow(convert(row))
                 n += 1
     if n == 0:
         tmp.unlink()
-        raise OSError(f"{day}: keine SBB-Zeilen gefunden")
+        raise OSError(f"{day}: keine Zug-Zeilen gefunden")
     tmp.replace(path)  # erst ersetzen, wenn die Datei komplett ist
     print(f"Datei gespeichert: {path} ({n} Zeilen, {path.stat().st_size // 1024} KB, {time.time() - t0:.0f} s)", flush=True)
     return n

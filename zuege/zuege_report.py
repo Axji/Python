@@ -1,6 +1,6 @@
 """Baut die Pünktlichkeits-Heatmap der Züge in der Schweiz als eigenständige HTML-Seite (daten/puenktlichkeit_auswertung.html).
 
-Liest alle CSV-Dateien daten/ist_daten_*.csv (siehe get_sbb_data.py) und verdichtet sie:
+Liest alle CSV-Dateien daten/ist_daten_*.csv (siehe get_zuege_data.py) und verdichtet sie:
   - Verspätung = prognostizierte (REAL = gemessene) minus fahrplanmässige Ankunftszeit
   - pünktlich = weniger als 3 Minuten Verspätung (SBB-Definition), Ankunftszeit = geplante Ankunft
   - gezählt werden nur gemessene Ankünfte (an_prognose_status = REAL) ohne Ausfälle und Durchfahrten
@@ -192,7 +192,7 @@ render();
 def main() -> int:
     by_wd, by_st, info = load()
     if not info["days"]:
-        print("FEHLER: keine CSV-Dateien in daten/ (erst get_sbb_data.py ausführen)")
+        print("FEHLER: keine CSV-Dateien in daten/ (erst get_zuege_data.py ausführen)")
         return 1
     vms, stations, wd, st = compact(by_wd, by_st)
     data = {"retrievedAt": dt.datetime.now().isoformat(timespec="seconds"), "days": info["days"], "cancelled": info["cancelled"],

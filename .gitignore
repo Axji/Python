@@ -73,5 +73,5 @@ electricity/daten/
 build/
 dist/
 
-# SBB-Pünktlichkeit: heruntergeladene Ist-Daten (CSV pro Tag) und erzeugte Seite
-SBB/daten/
+# Zug-Pünktlichkeit: heruntergeladene Ist-Daten (CSV pro Tag) und erzeugte Seite
+zuege/daten/

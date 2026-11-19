@@ -8,7 +8,7 @@ geprüft; vorhandene Tage werden übersprungen.
 Gespeichert werden nur Züge aller Bahnunternehmen (PRODUKT_ID = Zug, also ohne Bus, Tram, Metro und Schiff; SBB, BLS, Thurbo,
 RhB, ...) und nur die Spalten, die für die Pünktlichkeitsauswertung nötig sind (etwa 25 MB pro Tag). Datum und Zeiten werden ins ISO-Format gebracht (JJJJ-MM-TT, JJJJ-MM-TTThh:mm:ss).
 
-Aufruf: get_sbb_data.py [--tage N] [--neu]   (--neu lädt auch bereits vorhandene Tage erneut und ersetzt ihre Dateien)
+Aufruf: get_zuege_data.py [--tage N] [--neu]   (--neu lädt auch bereits vorhandene Tage erneut und ersetzt ihre Dateien)
 """
 import argparse
 import csv
@@ -22,7 +22,7 @@ from pathlib import Path
 
 PAGE = "https://data.opentransportdata.swiss/en/dataset/ist-daten-v2"
 OUT = Path(__file__).with_name("daten")
-UA = {"User-Agent": "Mozilla/5.0 (sbb-puenktlichkeit)"}
+UA = {"User-Agent": "Mozilla/5.0 (zuege-puenktlichkeit)"}
 COLUMNS = ["betriebstag", "fahrt_bezeichner", "linien_text", "verkehrsmittel_text", "faellt_aus_tf", "durchfahrt_tf",
            "bpuic", "haltestellen_name", "ankunftszeit", "an_prognose", "an_prognose_status",
            "abfahrtszeit", "ab_prognose", "ab_prognose_status"]

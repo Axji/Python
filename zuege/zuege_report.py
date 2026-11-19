@@ -81,6 +81,7 @@ HTML = r"""<!doctype html>
   .sub { color:var(--muted); margin-bottom:14px; }
   .note { color:var(--muted); font-size:13px; margin:0 0 6px; }
   .controls { display:flex; flex-wrap:wrap; gap:14px; align-items:end; margin-bottom:14px; }
+  [hidden] { display:none !important; }
   label { display:flex; flex-direction:column; gap:3px; font-size:13px; color:var(--muted); }
   select { font:inherit; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:6px 8px; }
   .cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:10px; margin-bottom:8px; }
@@ -102,6 +103,10 @@ HTML = r"""<!doctype html>
   <label>Heatmap <select id="view">
     <option value="wd">Wochentag × Uhrzeit</option>
     <option value="st">Bahnhof × Uhrzeit</option>
+  </select></label>
+  <label id="sortlbl">Bahnhöfe sortiert nach <select id="sort">
+    <option value="alpha">Alphabet</option>
+    <option value="n">Menge der Daten (Ankünfte)</option>
   </select></label>
   <label>Zugart <select id="vm"></select></label>
   <label>Kennzahl <select id="metric">
@@ -147,11 +152,19 @@ function value(c, m) {
 }
 
 function render() {
-  const view = $('view').value, vm = +$('vm').value, m = $('metric').value, minn = +$('minn').value;
+  const view = $('view').value, vm = +$('vm').value, m = $('metric').value, minn = +$('minn').value, by = $('sort').value;
+  $('sortlbl').hidden = view !== 'st';
   const rows = (view === 'wd' ? DATA.wd : DATA.st).filter(r => vm < 0 || r[0] === vm);
-  const ys = view === 'wd' ? WDAYS : DATA.stations;
-  const cells = ys.map(() => Array.from({length: 24}, () => [0, 0, 0, 0]));
+  let ys = view === 'wd' ? WDAYS : DATA.stations;
+  let cells = ys.map(() => Array.from({length: 24}, () => [0, 0, 0, 0]));
   rows.forEach(r => { const c = cells[r[1]][r[2]]; for (let i = 0; i < 4; i++) c[i] += r[3 + i]; });
+  if (view === 'st') {  // Bahnhöfe: die Daten liegen alphabetisch vor, optional nach Anzahl Ankünfte (absteigend) umordnen
+    const n = cells.map(row => row.reduce((a, c) => a + c[0], 0));
+    const order = ys.map((_, i) => i);
+    if (by === 'n') order.sort((a, b) => n[b] - n[a] || a - b);
+    ys = order.map(i => ys[i]);
+    cells = order.map(i => cells[i]);
+  }
 
   const tot = [0, 0, 0, 0];
   rows.forEach(r => { for (let i = 0; i < 4; i++) tot[i] += r[3 + i]; });
@@ -169,7 +182,7 @@ function render() {
   const unit = m === 'avg' ? ' Min.' : ' %';
   const xs = Array.from({length: 24}, (_, h) => String(h).padStart(2, '0') + ':00');
   const fg = css('--fg'), line = css('--line');
-  $('title').textContent = view === 'wd' ? 'Wochentag nach Uhrzeit' : 'Die ' + DATA.stations.length + ' Bahnhöfe mit den meisten Ankünften (alphabetisch) nach Uhrzeit';
+  $('title').textContent = view === 'wd' ? 'Wochentag nach Uhrzeit' : 'Die ' + DATA.stations.length + ' Bahnhöfe mit den meisten Ankünften (' + (by === 'n' ? 'nach Menge der Daten' : 'alphabetisch') + ') nach Uhrzeit';
   $('note').textContent = 'Geplante Ankunftsstunde. Grün = pünktlich, rot = verspätet. Leere Felder: weniger als ' + minn + ' Ankünfte' +
     (view === 'wd' && DATA.days.length < 7 ? '. Es liegen erst ' + DATA.days.length + ' Betriebstag(e) vor, die Wochentage füllen sich mit jedem Tag.' : '.');
   const h = view === 'wd' ? 380 : Math.max(420, ys.length * 24 + 120);
@@ -181,7 +194,7 @@ function render() {
      font: {color: fg}, xaxis: {tickangle: -45, gridcolor: line}, yaxis: {autorange: 'reversed', automargin: true}},
     {responsive: true, displaylogo: false});
 }
-['view', 'vm', 'metric', 'minn'].forEach(id => $(id).addEventListener('change', render));
+['view', 'sort', 'vm', 'metric', 'minn'].forEach(id => $(id).addEventListener('change', render));
 render();
 </script>
 </body>

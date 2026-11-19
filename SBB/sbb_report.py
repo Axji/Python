@@ -9,6 +9,7 @@ import csv
 import datetime as dt
 import json
 import sys
+import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
@@ -54,7 +55,8 @@ def compact(by_wd, by_st):
     total = defaultdict(int)
     for (_vm, st, _h), c in by_st.items():
         total[st] += c[0]
-    stations = sorted(total, key=lambda s: -total[s])[:TOP_STATIONS]
+    top = sorted(total, key=lambda s: -total[s])[:TOP_STATIONS]  # die Bahnhöfe mit den meisten Ankünften ...
+    stations = sorted(top, key=lambda s: unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().casefold())  # ... alphabetisch (ä = a)
     si = {s: i for i, s in enumerate(stations)}
     wd = [[vi[k[0]], k[1], k[2], *map(int, c)] for k, c in sorted(by_wd.items())]
     st = [[vi[k[0]], si[k[1]], k[2], *map(int, c)] for k, c in sorted(by_st.items()) if k[1] in si]
@@ -167,7 +169,7 @@ function render() {
   const unit = m === 'avg' ? ' Min.' : ' %';
   const xs = Array.from({length: 24}, (_, h) => String(h).padStart(2, '0') + ':00');
   const fg = css('--fg'), line = css('--line');
-  $('title').textContent = view === 'wd' ? 'Wochentag nach Uhrzeit' : 'Die ' + DATA.stations.length + ' Bahnhöfe mit den meisten Ankünften nach Uhrzeit';
+  $('title').textContent = view === 'wd' ? 'Wochentag nach Uhrzeit' : 'Die ' + DATA.stations.length + ' Bahnhöfe mit den meisten Ankünften (alphabetisch) nach Uhrzeit';
   $('note').textContent = 'Geplante Ankunftsstunde. Grün = pünktlich, rot = verspätet. Leere Felder: weniger als ' + minn + ' Ankünfte' +
     (view === 'wd' && DATA.days.length < 7 ? '. Es liegen erst ' + DATA.days.length + ' Betriebstag(e) vor, die Wochentage füllen sich mit jedem Tag.' : '.');
   const h = view === 'wd' ? 380 : Math.max(420, ys.length * 24 + 120);
